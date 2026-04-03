@@ -14,11 +14,12 @@ import {
 const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
 function KpiCard({ title, value, sub, icon: Icon, color }) {
+  // Bylance palette: teal = Electric Teal, navy = Deep Navy-tinted, slate = Slate Grey, amber = warning
   const colors = {
-    blue:   { bg: 'bg-blue-50 dark:bg-blue-950/30',   icon: 'bg-blue-100 text-blue-600',     text: 'text-blue-600' },
-    green:  { bg: 'bg-emerald-50 dark:bg-emerald-950/30', icon: 'bg-emerald-100 text-emerald-600', text: 'text-emerald-600' },
-    violet: { bg: 'bg-violet-50 dark:bg-violet-950/30', icon: 'bg-violet-100 text-violet-600', text: 'text-violet-600' },
-    amber:  { bg: 'bg-amber-50 dark:bg-amber-950/30',  icon: 'bg-amber-100 text-amber-600',   text: 'text-amber-600' },
+    teal:  { bg: 'bg-teal-50',   icon: 'bg-teal-100 text-teal-700',    text: 'text-teal-700' },
+    navy:  { bg: 'bg-blue-50',   icon: 'bg-blue-100 text-blue-800',    text: 'text-blue-800' },
+    slate: { bg: 'bg-slate-50',  icon: 'bg-slate-100 text-slate-600',  text: 'text-slate-700' },
+    amber: { bg: 'bg-amber-50',  icon: 'bg-amber-100 text-amber-700',  text: 'text-amber-700' },
   };
   const c = colors[color] || colors.blue;
   return (
@@ -124,9 +125,9 @@ export default function Dashboard() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <KpiCard title="OS em aberto" value={stats.pendingOrders} sub={`${stats.orders} ordens no total`} icon={ClipboardList} color="blue" />
-        <KpiCard title="Clientes ativos" value={stats.clients} sub="no portfólio" icon={Users} color="violet" />
-        <KpiCard title="Faturamento" value={fmt(stats.revenue)} sub={profit >= 0 ? `Lucro: ${fmt(profit)}` : `Déficit: ${fmt(Math.abs(profit))}`} icon={profit >= 0 ? TrendingUp : TrendingDown} color="green" />
+        <KpiCard title="OS em aberto" value={stats.pendingOrders} sub={`${stats.orders} ordens no total`} icon={ClipboardList} color="teal" />
+        <KpiCard title="Clientes ativos" value={stats.clients} sub="no portfólio" icon={Users} color="navy" />
+        <KpiCard title="Faturamento" value={fmt(stats.revenue)} sub={profit >= 0 ? `Lucro: ${fmt(profit)}` : `Déficit: ${fmt(Math.abs(profit))}`} icon={profit >= 0 ? TrendingUp : TrendingDown} color="slate" />
         <KpiCard title="Garantias ativas" value={stats.warranties} sub="em vigência" icon={Shield} color="amber" />
       </div>
 
@@ -137,12 +138,12 @@ export default function Dashboard() {
           <h2 className="text-sm font-semibold text-foreground">Atalhos rápidos</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <ActionCard icon={Wrench} title={copy.osTitle} description={copy.osDesc} cta="Criar nova OS" to="/service-orders" gradient="bg-gradient-to-br from-blue-600 to-blue-500" />
-          <ActionCard icon={UserPlus} title="Novo cliente bateu na porta?" description="Registre o contato, construa histórico e entregue uma experiência personalizada." cta="Cadastrar cliente" to="/clients" gradient="bg-gradient-to-br from-violet-600 to-purple-500" />
-          <ActionCard icon={TrendingUp} title="Serviço fechado — e o caixa?" description="Lance a receita antes que o dia feche. Cada real registrado conta pra análise." cta="Ver financeiro" to="/financial" gradient="bg-gradient-to-br from-emerald-600 to-teal-500" />
-          <ActionCard icon={Package} title="As peças estão no limite?" description="Cheque o estoque, atualize quantidades e evite surpresas na hora da OS." cta="Ver estoque" to="/items" gradient="bg-gradient-to-br from-orange-500 to-amber-500" />
-          <ActionCard icon={Shield} title="Garantia para cada cliente satisfeito" description={stats.warranties > 0 ? `Você tem ${stats.warranties} garantia${stats.warranties > 1 ? 's' : ''} ativa${stats.warranties > 1 ? 's' : ''}. Fique de olho nos prazos.` : 'Emita garantias para os serviços concluídos e reforce a confiança do cliente.'} cta="Ver garantias" to="/warranties" gradient="bg-gradient-to-br from-rose-500 to-pink-500" />
-          <ActionCard icon={BarChart3} title="Como está o desempenho real?" description={`Receita total: ${fmt(stats.revenue)}. Acesse o financeiro e enxergue o negócio inteiro de uma vez.`} cta="Analisar números" to="/financial" gradient="bg-gradient-to-br from-slate-600 to-slate-500" />
+          <ActionCard icon={Wrench} title={copy.osTitle} description={copy.osDesc} cta="Criar nova OS" to="/service-orders" gradient="bg-gradient-to-br from-[#0A1F44] to-[#122960]" />
+          <ActionCard icon={UserPlus} title="Novo cliente bateu na porta?" description="Registre o contato, construa histórico e entregue uma experiência personalizada." cta="Cadastrar cliente" to="/clients" gradient="bg-gradient-to-br from-[#0A1F44] to-[#007A5A]" />
+          <ActionCard icon={TrendingUp} title="Serviço fechado — e o caixa?" description="Lance a receita antes que o dia feche. Cada real registrado conta pra análise." cta="Ver financeiro" to="/financial" gradient="bg-gradient-to-br from-[#00C897] to-[#008F6B]" />
+          <ActionCard icon={Package} title="As peças estão no limite?" description="Cheque o estoque, atualize quantidades e evite surpresas na hora da OS." cta="Ver estoque" to="/items" gradient="bg-gradient-to-br from-[#4A4A4A] to-[#2d2d2d]" />
+          <ActionCard icon={Shield} title="Garantia para cada cliente satisfeito" description={stats.warranties > 0 ? `Você tem ${stats.warranties} garantia${stats.warranties > 1 ? 's' : ''} ativa${stats.warranties > 1 ? 's' : ''}. Fique de olho nos prazos.` : 'Emita garantias para os serviços concluídos e reforce a confiança do cliente.'} cta="Ver garantias" to="/warranties" gradient="bg-gradient-to-br from-[#1a3a7a] to-[#0A1F44]" />
+          <ActionCard icon={BarChart3} title="Como está o desempenho real?" description={`Receita total: ${fmt(stats.revenue)}. Acesse o financeiro e enxergue o negócio inteiro de uma vez.`} cta="Analisar números" to="/financial" gradient="bg-gradient-to-br from-[#008F6B] to-[#0A1F44]" />
         </div>
       </div>
 

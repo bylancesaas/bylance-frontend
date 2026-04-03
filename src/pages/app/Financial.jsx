@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useMemo } from 'react';
-import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, DollarSign, FileText, Wrench, ShoppingCart, Search, SlidersHorizontal, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, DollarSign, FileText, Wrench, ShoppingCart, Search, SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Financial() {
@@ -26,6 +26,8 @@ export default function Financial() {
   const [filterType, setFilterType] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const load = async () => {
     try {
@@ -43,16 +45,18 @@ export default function Financial() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = { ...form, value: parseFloat(form.value), date: new Date(form.date).toISOString() };
+    setSaving(true);
     try {
       if (editing) { await api.put(`/financial/${editing.id}`, data); toast.success('Atualizado'); }
       else { await api.post('/financial', data); toast.success('Criado'); }
       setDialogOpen(false); load();
-    } catch { toast.error('Erro'); }
+    } catch { toast.error('Erro'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover?')) return;
-    try { await api.delete(`/financial/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); }
+    setDeletingId(id);
+    try { await api.delete(`/financial/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
   };
 
   const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -140,7 +144,7 @@ export default function Financial() {
                 <TableCell>{r.date ? new Date(r.date).toLocaleDateString('pt-BR') : '-'}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  <Button variant="ghost" size="icon" disabled={deletingId === r.id} onClick={() => handleDelete(r.id)}>{deletingId === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -165,7 +169,7 @@ export default function Financial() {
             </div>
             <div className="space-y-2"><Label>Categoria</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Descrição</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit">Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
           </form>
         </DialogContent>
       </Dialog>

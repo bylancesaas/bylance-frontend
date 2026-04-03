@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Search, Package, X, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Package, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Items() {
@@ -20,6 +20,8 @@ export default function Items() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', costPrice: 0, sellPrice: 0, stockQuantity: 0, category: '' });
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const load = () => { api.get('/items').then(r => setItems(r.data.data || [])).catch(() => toast.error('Erro')).finally(() => setLoading(false)); };
   useEffect(() => { load(); }, []);
@@ -30,16 +32,18 @@ export default function Items() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = { ...form, costPrice: parseFloat(form.costPrice), sellPrice: parseFloat(form.sellPrice), stockQuantity: parseInt(form.stockQuantity) };
+    setSaving(true);
     try {
       if (editing) { await api.put(`/items/${editing.id}`, data); toast.success('Atualizado'); }
       else { await api.post('/items', data); toast.success('Criado'); }
       setDialogOpen(false); load();
-    } catch { toast.error('Erro'); }
+    } catch { toast.error('Erro'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover?')) return;
-    try { await api.delete(`/items/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); }
+    setDeletingId(id);
+    try { await api.delete(`/items/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
   };
 
   const filtered = useMemo(() => items.filter(i => {
@@ -100,7 +104,7 @@ export default function Items() {
                 <TableCell>{i.stockQuantity}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(i)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(i.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  <Button variant="ghost" size="icon" disabled={deletingId === i.id} onClick={() => handleDelete(i.id)}>{deletingId === i.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -120,7 +124,7 @@ export default function Items() {
               <div className="space-y-2"><Label>Estoque</Label><Input type="number" value={form.stockQuantity} onChange={e => setForm(f => ({ ...f, stockQuantity: e.target.value }))} /></div>
             </div>
             <div className="space-y-2"><Label>Categoria</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit">Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
           </form>
         </DialogContent>
       </Dialog>

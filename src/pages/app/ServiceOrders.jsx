@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, FileText, TrendingUp, CheckCircle, X, Wrench, ShoppingCart, Printer, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, FileText, TrendingUp, CheckCircle, X, Wrench, ShoppingCart, Printer, Search, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTenant } from '@/contexts/TenantContext';
 import { printServiceOrder } from '@/utils/print';
@@ -48,6 +48,11 @@ export default function ServiceOrders() {
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState(null);
   const [serviceForm, setServiceForm] = useState({ name: '', description: '', price: 0, estimatedTime: '', category: '' });
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [savingFinancial, setSavingFinancial] = useState(false);
+  const [savingService, setSavingService] = useState(false);
+  const [deletingServiceId, setDeletingServiceId] = useState(null);
 
   const load = async () => {
     try {
@@ -179,6 +184,7 @@ export default function ServiceOrders() {
       services: selectedServices.map(s => ({ serviceId: s.serviceId, quantity: s.quantity, unitPrice: s.unitPrice, total: s.total })),
       items: selectedItems.map(i => ({ itemId: i.itemId, quantity: i.quantity, unitPrice: i.unitPrice, total: i.total })),
     };
+    setSaving(true);
     try {
       let orderId;
       if (editing) {
@@ -198,10 +204,11 @@ export default function ServiceOrders() {
         const clientName = clients.find(c => c.id === form.clientId)?.name || '';
         setFinancialDialog({ orderId, total, clientName });
       }
-    } catch { toast.error('Erro ao salvar'); }
+    } catch { toast.error('Erro ao salvar'); } finally { setSaving(false); }
   };
 
   const sendToFinancial = async (orderId) => {
+    setSavingFinancial(true);
     try {
       await api.post(`/service-orders/${orderId}/to-financial`);
       toast.success('Receita lançada no financeiro!');
@@ -209,12 +216,13 @@ export default function ServiceOrders() {
       load();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Erro ao lançar');
-    }
+    } finally { setSavingFinancial(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover esta OS?')) return;
-    try { await api.delete(`/service-orders/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); }
+    setDeletingId(id);
+    try { await api.delete(`/service-orders/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
   };
 
   // ── Services tab handlers ──
@@ -233,17 +241,19 @@ export default function ServiceOrders() {
   const handleServiceSubmit = async (e) => {
     e.preventDefault();
     const data = { ...serviceForm, price: parseFloat(serviceForm.price) };
+    setSavingService(true);
     try {
       if (editingService) { await api.put(`/services/${editingService.id}`, data); toast.success('Serviço atualizado'); }
       else { await api.post('/services', data); toast.success('Serviço criado'); }
       setServiceDialogOpen(false);
       load();
-    } catch { toast.error('Erro ao salvar'); }
+    } catch { toast.error('Erro ao salvar'); } finally { setSavingService(false); }
   };
 
   const handleServiceDelete = async (id) => {
     if (!confirm('Remover este serviço?')) return;
-    try { await api.delete(`/services/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); }
+    setDeletingServiceId(id);
+    try { await api.delete(`/services/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingServiceId(null); }
   };
 
   const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -393,7 +403,7 @@ export default function ServiceOrders() {
                       )}
                       <Button variant="ghost" size="icon" title="Imprimir OS" onClick={() => printServiceOrder(o, tenant)}><Printer className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(o)}><Pencil className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(o.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                      <Button variant="ghost" size="icon" disabled={deletingId === o.id} onClick={() => handleDelete(o.id)}>{deletingId === o.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -427,7 +437,7 @@ export default function ServiceOrders() {
                   <TableCell>{s.estimatedTime || '-'}</TableCell>
                   <TableCell className="text-right space-x-1">
                     <Button variant="ghost" size="icon" onClick={() => openEditService(s)}><Pencil className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleServiceDelete(s.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                    <Button variant="ghost" size="icon" disabled={deletingServiceId === s.id} onClick={() => handleServiceDelete(s.id)}>{deletingServiceId === s.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -608,8 +618,8 @@ export default function ServiceOrders() {
             </div>
 
             <div className="flex gap-2 justify-end pt-1 border-t">
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit">Salvar OS</Button>
+              <Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button>
+              <Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar OS</Button>
             </div>
           </form>
         </DialogContent>
@@ -628,8 +638,8 @@ export default function ServiceOrders() {
             </div>
             <div className="space-y-2"><Label>Categoria</Label><Input value={serviceForm.category} onChange={e => setServiceForm(f => ({ ...f, category: e.target.value }))} /></div>
             <div className="flex gap-2 justify-end">
-              <Button type="button" variant="outline" onClick={() => setServiceDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit">Salvar</Button>
+              <Button type="button" variant="outline" disabled={savingService} onClick={() => setServiceDialogOpen(false)}>Cancelar</Button>
+              <Button type="submit" disabled={savingService}>{savingService && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button>
             </div>
           </form>
         </DialogContent>
@@ -654,8 +664,8 @@ export default function ServiceOrders() {
               como receita no módulo financeiro?
             </p>
             <div className="flex gap-3">
-              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5" onClick={() => sendToFinancial(financialDialog?.orderId)}>
-                <TrendingUp className="w-4 h-4" /> Sim, lançar
+              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5" disabled={savingFinancial} onClick={() => sendToFinancial(financialDialog?.orderId)}>
+                {savingFinancial ? <Loader2 className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />} Sim, lançar
               </Button>
               <Button variant="outline" className="flex-1" onClick={() => setFinancialDialog(null)}>Agora não</Button>
             </div>

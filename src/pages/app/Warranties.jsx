@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Shield, Printer, Search, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, Printer, Search, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTenant } from '@/contexts/TenantContext';
 import { printWarranty } from '@/utils/print';
@@ -27,6 +27,8 @@ export default function Warranties() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ clientId: '', status: 'active', startDate: '', endDate: '', description: '' });
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const load = async () => {
     try {
@@ -52,16 +54,18 @@ export default function Warranties() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = { ...form, startDate: new Date(form.startDate).toISOString(), endDate: new Date(form.endDate).toISOString() };
+    setSaving(true);
     try {
       if (editing) { await api.put(`/warranties/${editing.id}`, data); toast.success('Atualizado'); }
       else { await api.post('/warranties', data); toast.success('Criado'); }
       setDialogOpen(false); load();
-    } catch { toast.error('Erro'); }
+    } catch { toast.error('Erro'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover?')) return;
-    try { await api.delete(`/warranties/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); }
+    setDeletingId(id);
+    try { await api.delete(`/warranties/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
   };
 
   if (loading) return <LoadingSpinner />;
@@ -113,7 +117,7 @@ export default function Warranties() {
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" title="Imprimir garantia" onClick={() => printWarranty(w, tenant)}><Printer className="w-4 h-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => openEdit(w)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(w.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  <Button variant="ghost" size="icon" disabled={deletingId === w.id} onClick={() => handleDelete(w.id)}>{deletingId === w.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -143,7 +147,7 @@ export default function Warranties() {
               </select>
             </div>
             <div className="space-y-2"><Label>Descrição</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit">Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
           </form>
         </DialogContent>
       </Dialog>

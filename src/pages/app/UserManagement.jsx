@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Users, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const roleMap = { director: 'Diretor', assistant: 'Assistente', mechanic: 'Técnico' };
@@ -20,6 +20,8 @@ export default function UserManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'mechanic' });
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const load = () => { api.get('/users').then(r => setUsers(r.data.data || [])).catch(() => toast.error('Erro')).finally(() => setLoading(false)); };
   useEffect(() => { load(); }, []);
@@ -31,16 +33,18 @@ export default function UserManagement() {
     e.preventDefault();
     const data = { ...form };
     if (editing && !data.password) delete data.password;
+    setSaving(true);
     try {
       if (editing) { await api.put(`/users/${editing.id}`, data); toast.success('Atualizado'); }
       else { await api.post('/users', data); toast.success('Usuário criado'); }
       setDialogOpen(false); load();
-    } catch (err) { toast.error(err.response?.data?.message || 'Erro'); }
+    } catch (err) { toast.error(err.response?.data?.message || 'Erro'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover este usuário?')) return;
-    try { await api.delete(`/users/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); }
+    setDeletingId(id);
+    try { await api.delete(`/users/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
   };
 
   if (loading) return <LoadingSpinner />;
@@ -60,7 +64,7 @@ export default function UserManagement() {
                 <TableCell><Badge variant={u.active ? 'success' : 'destructive'}>{u.active ? 'Ativo' : 'Inativo'}</Badge></TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(u)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(u.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  <Button variant="ghost" size="icon" disabled={deletingId === u.id} onClick={() => handleDelete(u.id)}>{deletingId === u.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -81,7 +85,7 @@ export default function UserManagement() {
                 <option value="director">Diretor</option><option value="assistant">Assistente</option><option value="mechanic">Técnico</option>
               </select>
             </div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit">Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
           </form>
         </DialogContent>
       </Dialog>

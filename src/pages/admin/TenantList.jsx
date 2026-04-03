@@ -7,12 +7,13 @@ import EmptyState from '@/components/EmptyState';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Building2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function TenantList() {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
 
   const load = () => {
     api.get('/tenants').then(res => setTenants(res.data.data || [])).catch(() => toast.error('Erro ao carregar')).finally(() => setLoading(false));
@@ -22,11 +23,12 @@ export default function TenantList() {
 
   const handleDelete = async (id, name) => {
     if (!confirm(`Remover empresa "${name}"? Isso apagará todos os dados!`)) return;
+    setDeletingId(id);
     try {
       await api.delete(`/tenants/${id}`);
       toast.success('Empresa removida');
       load();
-    } catch { toast.error('Erro ao remover'); }
+    } catch { toast.error('Erro ao remover'); } finally { setDeletingId(null); }
   };
 
   if (loading) return <LoadingSpinner />;
@@ -61,7 +63,7 @@ export default function TenantList() {
                 <TableCell>{t._count?.users || 0}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Link to={`/admin/tenants/${t.id}`}><Button variant="ghost" size="icon"><Pencil className="w-4 h-4" /></Button></Link>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id, t.name)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  <Button variant="ghost" size="icon" disabled={deletingId === t.id} onClick={() => handleDelete(t.id, t.name)}>{deletingId === t.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                 </TableCell>
               </TableRow>
             ))}

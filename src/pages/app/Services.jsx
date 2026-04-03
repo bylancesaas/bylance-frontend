@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Search, Wrench } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Wrench, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Services() {
@@ -18,6 +18,8 @@ export default function Services() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', price: 0, estimatedTime: '', category: '' });
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const load = () => { api.get('/services').then(r => setServices(r.data.data || [])).catch(() => toast.error('Erro')).finally(() => setLoading(false)); };
   useEffect(() => { load(); }, []);
@@ -28,16 +30,18 @@ export default function Services() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = { ...form, price: parseFloat(form.price) };
+    setSaving(true);
     try {
       if (editing) { await api.put(`/services/${editing.id}`, data); toast.success('Atualizado'); }
       else { await api.post('/services', data); toast.success('Criado'); }
       setDialogOpen(false); load();
-    } catch { toast.error('Erro'); }
+    } catch { toast.error('Erro'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover?')) return;
-    try { await api.delete(`/services/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); }
+    setDeletingId(id);
+    try { await api.delete(`/services/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
   };
 
   const filtered = services.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
@@ -60,7 +64,7 @@ export default function Services() {
                 <TableCell>{s.estimatedTime || '-'}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(s)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  <Button variant="ghost" size="icon" disabled={deletingId === s.id} onClick={() => handleDelete(s.id)}>{deletingId === s.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -79,7 +83,7 @@ export default function Services() {
               <div className="space-y-2"><Label>Tempo Estimado</Label><Input value={form.estimatedTime} onChange={e => setForm(f => ({ ...f, estimatedTime: e.target.value }))} placeholder="ex: 2h" /></div>
             </div>
             <div className="space-y-2"><Label>Categoria</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit">Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
           </form>
         </DialogContent>
       </Dialog>

@@ -4,31 +4,38 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 224 71% 4%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
-    --primary: 220 91% 54%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 9% 46%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 220 9% 20%;
-    --destructive: 0 84% 60%;
+    /* ── Bylance Design Tokens ─────────────────────────────────
+       Deep Navy   #0A1F44  → hsl(218 74% 15%)
+       Electric Teal #00C897 → hsl(165 100% 39%)
+       Slate Grey  #4A4A4A  → hsl(0 0% 29%)
+       Ice White   #F0F4F8  → hsl(210 37% 96%)
+       Pure White  #FFFFFF  → hsl(0 0% 100%)
+    ──────────────────────────────────────────────────────────── */
+    --background: 210 37% 96%;        /* Ice White — página */
+    --foreground: 218 74% 15%;        /* Deep Navy — texto principal */
+    --card: 0 0% 100%;                /* Pure White — superfície de card */
+    --card-foreground: 218 74% 15%;   /* Deep Navy */
+    --primary: 165 100% 39%;          /* Electric Teal #00C897 */
+    --primary-foreground: 0 0% 100%;  /* Branco para texto sobre teal */
+    --secondary: 210 25% 92%;         /* Ice White escurecido — superfície secundária */
+    --secondary-foreground: 0 0% 29%; /* Slate Grey */
+    --muted: 210 25% 92%;             /* Superfície muted */
+    --muted-foreground: 0 0% 29%;     /* Slate Grey #4A4A4A */
+    --accent: 165 60% 95%;            /* Teal muito claro — hover suave */
+    --accent-foreground: 165 80% 25%; /* Teal escuro — texto sobre accent */
+    --destructive: 0 84% 60%;         /* Vermelho semântico */
     --destructive-foreground: 0 0% 100%;
-    --success: 142 76% 36%;
+    --success: 142 76% 36%;           /* Verde semântico */
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 38 92% 50%;            /* Âmbar semântico */
     --warning-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 220 91% 54%;
+    --border: 210 20% 88%;            /* Borda azul-cinza suave */
+    --input: 210 20% 88%;
+    --ring: 165 100% 39%;             /* Teal — foco/ring */
     --radius: 0.625rem;
-    --sidebar: 224 71% 4%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-border: 220 17% 17%;
+    --sidebar: 218 74% 15%;           /* Deep Navy #0A1F44 */
+    --sidebar-foreground: 0 0% 98%;   /* Branco neutro */
+    --sidebar-border: 218 40% 20%;    /* Navy levemente mais claro */
   }
 }
 
