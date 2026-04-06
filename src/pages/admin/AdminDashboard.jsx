@@ -340,7 +340,7 @@ export default function AdminDashboard() {
         <select
           value={months}
           onChange={e => setMonths(Number(e.target.value))}
-          className="h-7 text-xs rounded-lg border border-input bg-background px-2.5 focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 py-0 text-xs rounded-lg border border-input bg-background px-2.5 focus:outline-none focus:ring-1 focus:ring-ring"
         >
           <option value={3}>Últimos 3 meses</option>
           <option value={6}>Últimos 6 meses</option>
@@ -349,7 +349,7 @@ export default function AdminDashboard() {
         <select
           value={filterPlan}
           onChange={e => setFilterPlan(e.target.value)}
-          className="h-7 text-xs rounded-lg border border-input bg-background px-2.5 focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 py-0 text-xs rounded-lg border border-input bg-background px-2.5 focus:outline-none focus:ring-1 focus:ring-ring"
         >
           <option value="all">Todos os planos</option>
           {uniquePlans.map(p => <option key={p} value={p}>{PLAN_LABELS[p] || p}</option>)}
@@ -357,7 +357,7 @@ export default function AdminDashboard() {
         <select
           value={filterStatus}
           onChange={e => setFilterStatus(e.target.value)}
-          className="h-7 text-xs rounded-lg border border-input bg-background px-2.5 focus:outline-none focus:ring-1 focus:ring-ring"
+          className="h-8 py-0 text-xs rounded-lg border border-input bg-background px-2.5 focus:outline-none focus:ring-1 focus:ring-ring"
         >
           <option value="all">Todos os status</option>
           {uniqueStatuses.map(s => <option key={s} value={s}>{STATUS_LABELS[s] || s}</option>)}
