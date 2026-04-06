@@ -21,7 +21,7 @@ export function TenantProvider({ children }) {
   } : {};
 
   return (
-    <TenantContext.Provider value={{ tenant, modules: tenant?.modules || [] }}>
+    <TenantContext.Provider value={{ tenant, modules: tenant?.modules || [], vertical: tenant?.vertical || 'mecanica' }}>
       <div style={tenantStyle}>
         {children}
       </div>

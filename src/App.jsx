@@ -20,6 +20,13 @@ import ServiceOrders from '@/pages/app/ServiceOrders';
 import Warranties from '@/pages/app/Warranties';
 import Financial from '@/pages/app/Financial';
 import UserManagement from '@/pages/app/UserManagement';
+// Hotel pages
+import HotelDashboard from '@/pages/app/hotel/HotelDashboard';
+import Guests from '@/pages/app/hotel/Guests';
+import RoomTypes from '@/pages/app/hotel/RoomTypes';
+import Rooms from '@/pages/app/hotel/Rooms';
+import Reservations from '@/pages/app/hotel/Reservations';
+import Housekeeping from '@/pages/app/hotel/Housekeeping';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -57,6 +64,13 @@ function AppRoutes() {
         <Route path="warranties" element={<Warranties />} />
         <Route path="financial" element={<Financial />} />
         <Route path="user-management" element={<UserManagement />} />
+        {/* Hotel routes */}
+        <Route path="hotel" element={<HotelDashboard />} />
+        <Route path="guests" element={<Guests />} />
+        <Route path="room-types" element={<RoomTypes />} />
+        <Route path="rooms" element={<Rooms />} />
+        <Route path="reservations" element={<Reservations />} />
+        <Route path="housekeeping" element={<Housekeeping />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

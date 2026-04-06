@@ -11,7 +11,7 @@ import {
   DollarSign, LogOut, Building2, MapPin, User, CreditCard,
   Paintbrush, KeyRound, ClipboardCheck, ChevronRight, ChevronLeft,
   Check, Loader2, Eye, EyeOff, AlertCircle, Lock,
-  Copy, RefreshCw, Wand2, Sparkles,
+  Copy, RefreshCw, Wand2, Sparkles, BedDouble, CalendarDays, DoorOpen, Layers,
 } from 'lucide-react';
 
 // ── Validators ────────────────────────────────────────────────────────────────
@@ -46,26 +46,58 @@ const fmtCEP = (v) => {
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const ALL_MODULES = [
-  { key: 'dashboard',      label: 'Dashboard',          icon: LayoutDashboard },
-  { key: 'clients',        label: 'Clientes',           icon: Users },
-  { key: 'items',          label: 'Peças & Itens',      icon: Package },
-  { key: 'services',       label: 'Serviços',           icon: FileText },
-  { key: 'serviceOrders',  label: 'Ordens de Serviço',  icon: FileText },
-  { key: 'warranties',     label: 'Garantias',          icon: Shield },
-  { key: 'financial',      label: 'Financeiro',         icon: DollarSign },
-  { key: 'userManagement', label: 'Gestão de Usuários', icon: Users },
+// ── Verticals ─────────────────────────────────────────────────────────────────
+const VERTICALS = [
+  { value: 'mecanica',    label: 'Mecânica / Serviços', desc: 'Oficinas, ar-condicionado, funilaria, elétrica' },
+  { value: 'hotel',       label: 'Hotelaria',           desc: 'Hotéis, pousadas, hostels, motéis' },
+  { value: 'restaurante', label: 'Restaurante',         desc: 'Restaurantes, bares, cafeterias (em breve)', disabled: true },
 ];
 
-const BUSINESS_TYPES = [
-  { value: 'mecanica',        label: 'Mecânica Geral' },
-  { value: 'eletrica',        label: 'Elétrica Automotiva' },
-  { value: 'ar_condicionado', label: 'Ar-Condicionado' },
-  { value: 'funilaria',       label: 'Funilaria e Pintura' },
-  { value: 'refrigeracao',    label: 'Refrigeração' },
-  { value: 'oficina',         label: 'Oficina Multi-Serviço' },
-  { value: 'geral',           label: 'Geral / Outro' },
+const ALL_MODULES = [
+  // Shared
+  { key: 'dashboard',      label: 'Dashboard',          icon: LayoutDashboard, verticals: ['mecanica', 'hotel', 'restaurante'] },
+  { key: 'clients',        label: 'Clientes',           icon: Users,           verticals: ['mecanica'] },
+  { key: 'financial',      label: 'Financeiro',         icon: DollarSign,      verticals: ['mecanica', 'hotel', 'restaurante'] },
+  { key: 'userManagement', label: 'Gestão de Usuários', icon: Users,           verticals: ['mecanica', 'hotel', 'restaurante'] },
+  // Mecânica
+  { key: 'items',          label: 'Peças & Itens',      icon: Package,         verticals: ['mecanica'] },
+  { key: 'services',       label: 'Serviços',           icon: FileText,        verticals: ['mecanica'] },
+  { key: 'serviceOrders',  label: 'Ordens de Serviço',  icon: FileText,        verticals: ['mecanica'] },
+  { key: 'warranties',     label: 'Garantias',          icon: Shield,          verticals: ['mecanica'] },
+  // Hotel
+  { key: 'guests',         label: 'Hóspedes',           icon: User,            verticals: ['hotel'] },
+  { key: 'roomTypes',      label: 'Tipos de Quarto',    icon: Layers,          verticals: ['hotel'] },
+  { key: 'rooms',          label: 'Quartos',            icon: DoorOpen,        verticals: ['hotel'] },
+  { key: 'reservations',   label: 'Reservas',           icon: CalendarDays,    verticals: ['hotel'] },
+  { key: 'housekeeping',   label: 'Governança',         icon: Sparkles,        verticals: ['hotel'] },
 ];
+
+const BUSINESS_TYPES_BY_VERTICAL = {
+  mecanica: [
+    { value: 'mecanica',        label: 'Mecânica Geral' },
+    { value: 'eletrica',        label: 'Elétrica Automotiva' },
+    { value: 'ar_condicionado', label: 'Ar-Condicionado' },
+    { value: 'funilaria',       label: 'Funilaria e Pintura' },
+    { value: 'refrigeracao',    label: 'Refrigeração' },
+    { value: 'oficina',         label: 'Oficina Multi-Serviço' },
+    { value: 'geral',           label: 'Geral / Outro' },
+  ],
+  hotel: [
+    { value: 'hotel',    label: 'Hotel' },
+    { value: 'pousada',  label: 'Pousada' },
+    { value: 'hostel',   label: 'Hostel' },
+    { value: 'motel',    label: 'Motel' },
+    { value: 'resort',   label: 'Resort' },
+    { value: 'geral',    label: 'Geral / Outro' },
+  ],
+  restaurante: [
+    { value: 'restaurante', label: 'Restaurante' },
+    { value: 'bar',         label: 'Bar' },
+    { value: 'cafeteria',   label: 'Cafeteria' },
+    { value: 'geral',       label: 'Geral / Outro' },
+  ],
+};
+const BUSINESS_TYPES = Object.values(BUSINESS_TYPES_BY_VERTICAL).flat();
 
 const PORTES = [
   { value: 'mei',     label: 'MEI' },
@@ -108,7 +140,7 @@ const PREVIEW_NAV = [
 
 const INITIAL_FORM = {
   name: '', razaoSocial: '', cnpj: '', inscricaoEstadual: '', inscricaoMunicipal: '',
-  businessType: '', porte: '', site: '', slug: '', active: true, telefone: '',
+  vertical: 'mecanica', businessType: '', porte: '', site: '', slug: '', active: true, telefone: '',
   cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
   responsavelNome: '', responsavelEmail: '', responsavelTelefone: '', responsavelCargo: '',
   plan: 'basic', planStatus: 'ativo', planValue: '', planBillingType: 'monthly',
@@ -266,12 +298,22 @@ function StepEmpresa({ form, errors, onChange, slugChecking, onSlugBlur }) {
         </div>
       </Card>
 
-      <Card title="Classificação e acesso">
+      <Card title="Vertente e classificação">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          {VERTICALS.map(v => (
+            <label key={v.value} className={`flex flex-col gap-1 p-4 rounded-xl border-2 transition-all ${v.disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'} ${form.vertical === v.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}>
+              <input type="radio" name="vertical" value={v.value} checked={form.vertical === v.value} onChange={() => !v.disabled && onChange('vertical', v.value)} className="sr-only" disabled={v.disabled} />
+              <span className="font-semibold text-sm">{v.label}</span>
+              <span className="text-xs text-muted-foreground">{v.desc}</span>
+              {form.vertical === v.value && <Check className="w-4 h-4 text-primary mt-1" />}
+            </label>
+          ))}
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Tipo de negócio" required error={errors.businessType}>
             <Select value={form.businessType} onChange={e => onChange('businessType', e.target.value)}>
               <option value="">Selecione...</option>
-              {BUSINESS_TYPES.map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
+              {(BUSINESS_TYPES_BY_VERTICAL[form.vertical] || []).map(b => <option key={b.value} value={b.value}>{b.label}</option>)}
             </Select>
           </Field>
           <Field label="Porte" optional>
@@ -474,7 +516,7 @@ function StepVisual({ form, onChange, modules, onToggleModule, logoPreview, setL
 
       <Card title="Módulos ativos" subtitle="Funcionalidades disponíveis para esta empresa">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {ALL_MODULES.map(m => {
+          {ALL_MODULES.filter(m => m.verticals.includes(form.vertical)).map(m => {
             const mod = modules.find(mod => mod.module === m.key);
             const IconComp = m.icon;
             return (
@@ -720,6 +762,7 @@ export default function TenantForm() {
           cnpj: t.cnpj ? fmtCNPJ(t.cnpj) : '',
           inscricaoEstadual: t.inscricaoEstadual || '',
           inscricaoMunicipal: t.inscricaoMunicipal || '',
+          vertical: t.vertical || 'mecanica',
           businessType: t.businessType || '',
           porte: t.porte || '',
           site: t.site || '',
@@ -780,7 +823,16 @@ export default function TenantForm() {
   }, [form, modules, currentStep, isEditing]);
 
   const onChange = useCallback((field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    setForm(prev => {
+      const next = { ...prev, [field]: value };
+      // When vertical changes, reset business type and rebuild modules
+      if (field === 'vertical') {
+        next.businessType = '';
+        const verticalModules = ALL_MODULES.filter(m => m.verticals.includes(value));
+        setModules(verticalModules.map(m => ({ module: m.key, active: true })));
+      }
+      return next;
+    });
     setErrors(prev => ({ ...prev, [field]: undefined }));
   }, []);
 

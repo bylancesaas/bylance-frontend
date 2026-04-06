@@ -2,31 +2,42 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import {
   LayoutDashboard, Users, Wrench, FileText, Shield,
-  DollarSign, Package, Menu, X, LogOut
+  DollarSign, Package, Menu, X, LogOut,
+  User, Layers, DoorOpen, CalendarDays, Sparkles, BedDouble,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant, useHasModule } from '@/contexts/TenantContext';
 
 const allNavItems = [
-  { path: '/', label: 'Home', icon: LayoutDashboard, module: 'dashboard', roles: ['director', 'assistant', 'mechanic'] },
-  { path: '/clients', label: 'Clientes', icon: Users, module: 'clients', roles: ['director', 'assistant', 'mechanic'] },
-  { path: '/items', label: 'Estoque', icon: Package, module: 'items', roles: ['director', 'assistant', 'mechanic'] },
-  { path: '/service-orders', label: 'Ordens de Serviço', icon: FileText, module: 'serviceOrders', roles: ['director', 'assistant', 'mechanic'] },
-  { path: '/warranties', label: 'Garantias', icon: Shield, module: 'warranties', roles: ['director', 'assistant', 'mechanic'] },
-  { path: '/financial', label: 'Financeiro', icon: DollarSign, module: 'financial', roles: ['director', 'assistant'] },
-  { path: '/user-management', label: 'Usuários', icon: Users, module: 'userManagement', roles: ['director'] },
+  // Mechanic vertical
+  { path: '/', label: 'Home', icon: LayoutDashboard, module: 'dashboard', verticals: ['mecanica'], roles: ['director', 'assistant', 'mechanic'] },
+  { path: '/clients', label: 'Clientes', icon: Users, module: 'clients', verticals: ['mecanica'], roles: ['director', 'assistant', 'mechanic'] },
+  { path: '/items', label: 'Estoque', icon: Package, module: 'items', verticals: ['mecanica'], roles: ['director', 'assistant', 'mechanic'] },
+  { path: '/service-orders', label: 'Ordens de Serviço', icon: FileText, module: 'serviceOrders', verticals: ['mecanica'], roles: ['director', 'assistant', 'mechanic'] },
+  { path: '/warranties', label: 'Garantias', icon: Shield, module: 'warranties', verticals: ['mecanica'], roles: ['director', 'assistant', 'mechanic'] },
+  { path: '/financial', label: 'Financeiro', icon: DollarSign, module: 'financial', verticals: ['mecanica', 'hotel'], roles: ['director', 'assistant'] },
+  { path: '/user-management', label: 'Usuários', icon: Users, module: 'userManagement', verticals: ['mecanica', 'hotel'], roles: ['director'] },
+  // Hotel vertical
+  { path: '/hotel', label: 'Dashboard', icon: BedDouble, module: 'dashboard', verticals: ['hotel'], roles: ['director', 'assistant', 'mechanic'] },
+  { path: '/guests', label: 'Hóspedes', icon: User, module: 'guests', verticals: ['hotel'], roles: ['director', 'assistant', 'mechanic'] },
+  { path: '/room-types', label: 'Tipos de Quarto', icon: Layers, module: 'roomTypes', verticals: ['hotel'], roles: ['director', 'assistant'] },
+  { path: '/rooms', label: 'Quartos', icon: DoorOpen, module: 'rooms', verticals: ['hotel'], roles: ['director', 'assistant', 'mechanic'] },
+  { path: '/reservations', label: 'Reservas', icon: CalendarDays, module: 'reservations', verticals: ['hotel'], roles: ['director', 'assistant', 'mechanic'] },
+  { path: '/housekeeping', label: 'Governança', icon: Sparkles, module: 'housekeeping', verticals: ['hotel'], roles: ['director', 'assistant', 'mechanic'] },
 ];
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { tenant, modules } = useTenant();
+  const { tenant, modules, vertical } = useTenant();
 
   const roleLabels = { director: 'Diretor', assistant: 'Assistente', mechanic: 'Técnico' };
 
   const navItems = allNavItems.filter(item =>
-    modules.includes(item.module) && item.roles.includes(user?.role)
+    item.verticals.includes(vertical) &&
+    modules.includes(item.module) &&
+    item.roles.includes(user?.role)
   );
 
   return (
