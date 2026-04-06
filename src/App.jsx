@@ -10,6 +10,7 @@ import AdminLayout from '@/components/AdminLayout';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import TenantList from '@/pages/admin/TenantList';
 import TenantForm from '@/pages/admin/TenantForm';
+import TenantDetail from '@/pages/admin/TenantDetail';
 import AppLayout from '@/components/Layout';
 import Dashboard from '@/pages/app/Dashboard';
 import Clients from '@/pages/app/Clients';
@@ -43,6 +44,7 @@ function AppRoutes() {
         <Route path="tenants" element={<TenantList />} />
         <Route path="tenants/new" element={<TenantForm />} />
         <Route path="tenants/:id" element={<TenantForm />} />
+        <Route path="tenants/:id/detail" element={<TenantDetail />} />
       </Route>
 
       {/* Tenant App routes */}
@@ -70,7 +72,13 @@ export default function App() {
           <AppRoutes />
         </AuthProvider>
       </BrowserRouter>
-      <Toaster position="top-right" richColors toastOptions={{ className: 'shadow-elevated border', style: { borderRadius: '0.75rem' } }} />
+      <Toaster
+        position="bottom-right"
+        richColors
+        expand={false}
+        duration={4000}
+        toastOptions={{ className: 'shadow-elevated border', style: { borderRadius: '0.75rem' } }}
+      />
     </QueryClientProvider>
   );
 }

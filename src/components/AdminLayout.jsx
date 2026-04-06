@@ -1,15 +1,28 @@
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { LayoutDashboard, Building2, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, Building2, LogOut, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const adminNav = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/tenants', label: 'Empresas', icon: Building2 },
 ];
 
+function NavTooltip({ label, children }) {
+  return (
+    <div className="relative group/tip">
+      {children}
+      <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 z-50 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap bg-popover text-popover-foreground border shadow-md opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150">
+        {label}
+        <span className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-border" />
+      </div>
+    </div>
+  );
+}
+
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
 
@@ -19,43 +32,98 @@ export default function AdminLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {sidebarOpen && <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
 
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 flex flex-col`}>
-        <div className="px-5 py-5 border-b border-sidebar-border">
-          <h1 className="text-2xl font-black tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Bylance</h1>
-          <p className="text-2xs text-sidebar-foreground/40 mt-0.5">Painel do Super Admin</p>
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-50 bg-sidebar text-sidebar-foreground flex flex-col
+          transition-all duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
+          ${collapsed ? 'w-16' : 'w-64'}`}
+      >
+        {/* Header */}
+        <div className={`flex items-center border-b border-sidebar-border h-[65px] shrink-0 ${collapsed ? 'justify-center px-2' : 'px-5'}`}>
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-black tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Bylance</h1>
+              <p className="text-2xs text-sidebar-foreground/40 mt-0.5">Painel do Super Admin</p>
+            </div>
+          )}
+          <button
+            onClick={() => setCollapsed(v => !v)}
+            className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/10 transition-all shrink-0"
+            aria-label={collapsed ? 'Expandir sidebar' : 'Retrair sidebar'}
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
           {adminNav.map(item => {
-            const isActive = location.pathname === item.path;
-            return (
+            const isActive = location.pathname === item.path ||
+              (item.path !== '/admin' && location.pathname.startsWith(item.path));
+            const link = (
               <Link
-                key={item.path}
                 to={item.path}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all duration-150 ${
-                  isActive ? 'bg-white/10 text-white font-medium shadow-sm' : 'text-sidebar-foreground/50 hover:bg-white/5 hover:text-sidebar-foreground/90'
-                }`}
+                className={`flex items-center gap-3 px-2 py-2 rounded-lg text-[13px] transition-all duration-150
+                  ${collapsed ? 'justify-center' : ''}
+                  ${isActive
+                    ? 'bg-primary/[0.18] text-white font-semibold'
+                    : 'text-sidebar-foreground/55 hover:bg-white/[0.07] hover:text-sidebar-foreground/90'}`}
               >
-                <item.icon className="w-[18px] h-[18px]" />
-                {item.label}
+                <item.icon className="w-[18px] h-[18px] shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
               </Link>
+            );
+            return collapsed ? (
+              <NavTooltip key={item.path} label={item.label}>{link}</NavTooltip>
+            ) : (
+              <div key={item.path}>{link}</div>
             );
           })}
         </nav>
-        <div className="border-t border-sidebar-border p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-semibold">A</div>
-            <div className="flex-1"><p className="text-[13px] font-medium">{user?.name}</p><p className="text-2xs text-sidebar-foreground/40">Super Admin</p></div>
-            <button onClick={logout} className="p-1.5 rounded-md text-sidebar-foreground/40 hover:text-red-400 hover:bg-white/5 transition-all"><LogOut className="w-4 h-4" /></button>
-          </div>
+
+        {/* Footer */}
+        <div className={`border-t border-sidebar-border shrink-0 ${collapsed ? 'p-2' : 'p-3'}`}>
+          {collapsed ? (
+            <NavTooltip label="Sair">
+              <button
+                onClick={logout}
+                className="w-full flex items-center justify-center py-2 rounded-lg text-sidebar-foreground/40 hover:text-red-400 hover:bg-white/5 transition-all"
+                aria-label="Sair"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </NavTooltip>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-semibold shrink-0">
+                {user?.name?.[0]?.toUpperCase() || 'A'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-medium truncate">{user?.name}</p>
+                <p className="text-2xs text-sidebar-foreground/40">Super Admin</p>
+              </div>
+              <button
+                onClick={logout}
+                className="p-1.5 rounded-md text-sidebar-foreground/40 hover:text-red-400 hover:bg-white/5 transition-all"
+                aria-label="Sair"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b bg-card shadow-soft">
-          <button onClick={() => setSidebarOpen(true)} className="p-1 rounded-lg hover:bg-muted transition-colors"><Menu className="w-5 h-5" /></button>
+          <button onClick={() => setSidebarOpen(true)} className="p-1 rounded-lg hover:bg-muted transition-colors">
+            <Menu className="w-5 h-5" />
+          </button>
           <h1 className="font-semibold text-sm">Bylance Admin</h1>
         </header>
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">

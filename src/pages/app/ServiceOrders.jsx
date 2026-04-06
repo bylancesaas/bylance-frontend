@@ -190,11 +190,11 @@ export default function ServiceOrders() {
       if (editing) {
         await api.put(`/service-orders/${editing.id}`, payload);
         orderId = editing.id;
-        toast.success('OS atualizada');
+        toast.success('OS atualizada', { description: 'As alterações foram salvas.' });
       } else {
         const res = await api.post('/service-orders', payload);
         orderId = res.data.data?.id;
-        toast.success('OS criada');
+        toast.success('OS criada', { description: 'A ordem de serviço foi aberta com sucesso.' });
       }
       setDialogOpen(false);
       load();
@@ -222,7 +222,7 @@ export default function ServiceOrders() {
   const handleDelete = async (id) => {
     if (!confirm('Remover esta OS?')) return;
     setDeletingId(id);
-    try { await api.delete(`/service-orders/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
+    try { await api.delete(`/service-orders/${id}`); toast.success('Ordem de serviço removida'); load(); } catch { toast.error('Erro ao remover OS'); } finally { setDeletingId(null); }
   };
 
   // ── Services tab handlers ──
@@ -619,7 +619,7 @@ export default function ServiceOrders() {
 
             <div className="flex gap-2 justify-end pt-1 border-t">
               <Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar OS</Button>
+              <Button type="submit" disabled={saving}>{saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar OS'}</Button>
             </div>
           </form>
         </DialogContent>
@@ -639,7 +639,7 @@ export default function ServiceOrders() {
             <div className="space-y-2"><Label>Categoria</Label><Input value={serviceForm.category} onChange={e => setServiceForm(f => ({ ...f, category: e.target.value }))} /></div>
             <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" disabled={savingService} onClick={() => setServiceDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={savingService}>{savingService && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button>
+              <Button type="submit" disabled={savingService}>{savingService ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar'}</Button>
             </div>
           </form>
         </DialogContent>

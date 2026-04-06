@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,6 +17,8 @@
     --foreground: 218 74% 15%;        /* Deep Navy — texto principal */
     --card: 0 0% 100%;                /* Pure White — superfície de card */
     --card-foreground: 218 74% 15%;   /* Deep Navy */
+    --popover: 0 0% 100%;             /* Pure White — dropdown/tooltip */
+    --popover-foreground: 218 74% 15%;/* Deep Navy */
     --primary: 165 100% 39%;          /* Electric Teal #00C897 */
     --primary-foreground: 0 0% 100%;  /* Branco para texto sobre teal */
     --secondary: 210 25% 92%;         /* Ice White escurecido — superfície secundária */
@@ -54,6 +58,12 @@
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-optical-sizing: auto;
+  }
+
+  ::selection {
+    background-color: hsl(165 100% 39% / 0.15);
+    color: hsl(218 74% 15%);
   }
 
   /* Smooth scrollbar */
@@ -89,18 +99,32 @@
 
 @layer utilities {
   .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn 0.25s ease-out;
   }
   .animate-slide-up {
-    animation: slideUp 0.3s ease-out;
+    animation: slideUp 0.25s ease-out;
+  }
+  .animate-slide-down {
+    animation: slideDown 0.2s ease-out;
+  }
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
   }
 }
 
 @keyframes fadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
 }

@@ -23,7 +23,7 @@ export default function Items() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  const load = () => { api.get('/items').then(r => setItems(r.data.data || [])).catch(() => toast.error('Erro')).finally(() => setLoading(false)); };
+  const load = () => { api.get('/items').then(r => setItems(r.data.data || [])).catch(() => toast.error('Erro ao carregar estoque')).finally(() => setLoading(false)); };
   useEffect(() => { load(); }, []);
 
   const openNew = () => { setEditing(null); setForm({ name: '', description: '', costPrice: 0, sellPrice: 0, stockQuantity: 0, category: '' }); setDialogOpen(true); };
@@ -34,16 +34,16 @@ export default function Items() {
     const data = { ...form, costPrice: parseFloat(form.costPrice), sellPrice: parseFloat(form.sellPrice), stockQuantity: parseInt(form.stockQuantity) };
     setSaving(true);
     try {
-      if (editing) { await api.put(`/items/${editing.id}`, data); toast.success('Atualizado'); }
-      else { await api.post('/items', data); toast.success('Criado'); }
+      if (editing) { await api.put(`/items/${editing.id}`, data); toast.success('Item atualizado', { description: 'As alterações foram salvas.' }); }
+      else { await api.post('/items', data); toast.success('Item cadastrado', { description: 'O item foi adicionado ao estoque.' }); }
       setDialogOpen(false); load();
-    } catch { toast.error('Erro'); } finally { setSaving(false); }
+    } catch (err) { toast.error(err.response?.data?.message || 'Não foi possível salvar o item'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover?')) return;
     setDeletingId(id);
-    try { await api.delete(`/items/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
+    try { await api.delete(`/items/${id}`); toast.success('Item removido'); load(); } catch { toast.error('Erro ao remover item'); } finally { setDeletingId(null); }
   };
 
   const filtered = useMemo(() => items.filter(i => {
@@ -124,7 +124,7 @@ export default function Items() {
               <div className="space-y-2"><Label>Estoque</Label><Input type="number" value={form.stockQuantity} onChange={e => setForm(f => ({ ...f, stockQuantity: e.target.value }))} /></div>
             </div>
             <div className="space-y-2"><Label>Categoria</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar'}</Button></div>
           </form>
         </DialogContent>
       </Dialog>

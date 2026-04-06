@@ -23,7 +23,7 @@ export default function UserManagement() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  const load = () => { api.get('/users').then(r => setUsers(r.data.data || [])).catch(() => toast.error('Erro')).finally(() => setLoading(false)); };
+  const load = () => { api.get('/users').then(r => setUsers(r.data.data || [])).catch(() => toast.error('Erro ao carregar usuários')).finally(() => setLoading(false)); };
   useEffect(() => { load(); }, []);
 
   const openNew = () => { setEditing(null); setForm({ name: '', email: '', password: '', role: 'mechanic' }); setDialogOpen(true); };
@@ -35,16 +35,16 @@ export default function UserManagement() {
     if (editing && !data.password) delete data.password;
     setSaving(true);
     try {
-      if (editing) { await api.put(`/users/${editing.id}`, data); toast.success('Atualizado'); }
-      else { await api.post('/users', data); toast.success('Usuário criado'); }
+      if (editing) { await api.put(`/users/${editing.id}`, data); toast.success('Usuário atualizado', { description: 'Os dados foram salvos.' }); }
+      else { await api.post('/users', data); toast.success('Usuário criado', { description: 'O acesso foi configurado.' }); }
       setDialogOpen(false); load();
-    } catch (err) { toast.error(err.response?.data?.message || 'Erro'); } finally { setSaving(false); }
+    } catch (err) { toast.error(err.response?.data?.message || 'Não foi possível salvar o usuário'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover este usuário?')) return;
     setDeletingId(id);
-    try { await api.delete(`/users/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
+    try { await api.delete(`/users/${id}`); toast.success('Usuário removido'); load(); } catch { toast.error('Erro ao remover usuário'); } finally { setDeletingId(null); }
   };
 
   if (loading) return <LoadingSpinner />;
@@ -85,7 +85,7 @@ export default function UserManagement() {
                 <option value="director">Diretor</option><option value="assistant">Assistente</option><option value="mechanic">Técnico</option>
               </select>
             </div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar'}</Button></div>
           </form>
         </DialogContent>
       </Dialog>

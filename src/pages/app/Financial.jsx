@@ -34,7 +34,7 @@ export default function Financial() {
       const [r, s] = await Promise.all([api.get('/financial'), api.get('/financial/summary')]);
       setRecords(r.data.data || []);
       setSummary(s.data.data || { totalRevenue: 0, totalExpenses: 0, profit: 0 });
-    } catch { toast.error('Erro'); }
+    } catch { toast.error('Erro ao carregar registros financeiros'); }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -47,16 +47,16 @@ export default function Financial() {
     const data = { ...form, value: parseFloat(form.value), date: new Date(form.date).toISOString() };
     setSaving(true);
     try {
-      if (editing) { await api.put(`/financial/${editing.id}`, data); toast.success('Atualizado'); }
-      else { await api.post('/financial', data); toast.success('Criado'); }
+      if (editing) { await api.put(`/financial/${editing.id}`, data); toast.success('Registro atualizado', { description: 'O lançamento foi atualizado.' }); }
+      else { await api.post('/financial', data); toast.success('Registro lançado', { description: 'O lançamento foi adicionado ao financeiro.' }); }
       setDialogOpen(false); load();
-    } catch { toast.error('Erro'); } finally { setSaving(false); }
+    } catch (err) { toast.error(err.response?.data?.message || 'Não foi possível salvar o registro'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover?')) return;
     setDeletingId(id);
-    try { await api.delete(`/financial/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
+    try { await api.delete(`/financial/${id}`); toast.success('Registro removido'); load(); } catch { toast.error('Erro ao remover registro'); } finally { setDeletingId(null); }
   };
 
   const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -169,7 +169,7 @@ export default function Financial() {
             </div>
             <div className="space-y-2"><Label>Categoria</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Descrição</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar'}</Button></div>
           </form>
         </DialogContent>
       </Dialog>

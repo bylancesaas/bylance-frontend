@@ -34,7 +34,7 @@ export default function Warranties() {
     try {
       const [w, c] = await Promise.all([api.get('/warranties'), api.get('/clients')]);
       setWarranties(w.data.data || []); setClients(c.data.data || []);
-    } catch { toast.error('Erro'); }
+    } catch { toast.error('Erro ao carregar garantias'); }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -56,16 +56,16 @@ export default function Warranties() {
     const data = { ...form, startDate: new Date(form.startDate).toISOString(), endDate: new Date(form.endDate).toISOString() };
     setSaving(true);
     try {
-      if (editing) { await api.put(`/warranties/${editing.id}`, data); toast.success('Atualizado'); }
-      else { await api.post('/warranties', data); toast.success('Criado'); }
+      if (editing) { await api.put(`/warranties/${editing.id}`, data); toast.success('Garantia atualizada', { description: 'As alterações foram salvas.' }); }
+      else { await api.post('/warranties', data); toast.success('Garantia cadastrada', { description: 'A garantia foi emitida.' }); }
       setDialogOpen(false); load();
-    } catch { toast.error('Erro'); } finally { setSaving(false); }
+    } catch (err) { toast.error(err.response?.data?.message || 'Não foi possível salvar a garantia'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover?')) return;
     setDeletingId(id);
-    try { await api.delete(`/warranties/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
+    try { await api.delete(`/warranties/${id}`); toast.success('Garantia removida'); load(); } catch { toast.error('Erro ao remover garantia'); } finally { setDeletingId(null); }
   };
 
   if (loading) return <LoadingSpinner />;
@@ -147,7 +147,7 @@ export default function Warranties() {
               </select>
             </div>
             <div className="space-y-2"><Label>Descrição</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar'}</Button></div>
           </form>
         </DialogContent>
       </Dialog>

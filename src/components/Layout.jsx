@@ -60,8 +60,8 @@ export default function AppLayout() {
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all duration-150 ${
                   isActive
-                    ? 'bg-sidebar-foreground/15 text-sidebar-foreground font-medium shadow-sm'
-                    : 'text-sidebar-foreground/50 hover:bg-sidebar-foreground/5 hover:text-sidebar-foreground/90'
+                    ? 'bg-sidebar-foreground/[0.18] text-sidebar-foreground font-semibold'
+                    : 'text-sidebar-foreground/55 hover:bg-sidebar-foreground/[0.07] hover:text-sidebar-foreground/90'
                 }`}
               >
                 <item.icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? 'text-sidebar-foreground' : ''}`} />

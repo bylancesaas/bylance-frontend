@@ -21,7 +21,7 @@ export default function Services() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  const load = () => { api.get('/services').then(r => setServices(r.data.data || [])).catch(() => toast.error('Erro')).finally(() => setLoading(false)); };
+  const load = () => { api.get('/services').then(r => setServices(r.data.data || [])).catch(() => toast.error('Erro ao carregar serviços')).finally(() => setLoading(false)); };
   useEffect(() => { load(); }, []);
 
   const openNew = () => { setEditing(null); setForm({ name: '', description: '', price: 0, estimatedTime: '', category: '' }); setDialogOpen(true); };
@@ -32,16 +32,16 @@ export default function Services() {
     const data = { ...form, price: parseFloat(form.price) };
     setSaving(true);
     try {
-      if (editing) { await api.put(`/services/${editing.id}`, data); toast.success('Atualizado'); }
-      else { await api.post('/services', data); toast.success('Criado'); }
+      if (editing) { await api.put(`/services/${editing.id}`, data); toast.success('Serviço atualizado', { description: 'As alterações foram salvas.' }); }
+      else { await api.post('/services', data); toast.success('Serviço cadastrado', { description: 'O serviço foi adicionado ao catálogo.' }); }
       setDialogOpen(false); load();
-    } catch { toast.error('Erro'); } finally { setSaving(false); }
+    } catch (err) { toast.error(err.response?.data?.message || 'Não foi possível salvar o serviço'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover?')) return;
     setDeletingId(id);
-    try { await api.delete(`/services/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
+    try { await api.delete(`/services/${id}`); toast.success('Serviço removido'); load(); } catch { toast.error('Erro ao remover serviço'); } finally { setDeletingId(null); }
   };
 
   const filtered = services.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
@@ -83,7 +83,7 @@ export default function Services() {
               <div className="space-y-2"><Label>Tempo Estimado</Label><Input value={form.estimatedTime} onChange={e => setForm(f => ({ ...f, estimatedTime: e.target.value }))} placeholder="ex: 2h" /></div>
             </div>
             <div className="space-y-2"><Label>Categoria</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar'}</Button></div>
           </form>
         </DialogContent>
       </Dialog>

@@ -21,7 +21,7 @@ export default function Clients() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  const load = () => { api.get('/clients').then(r => setClients(r.data.data || [])).catch(() => toast.error('Erro')).finally(() => setLoading(false)); };
+  const load = () => { api.get('/clients').then(r => setClients(r.data.data || [])).catch(() => toast.error('Erro ao carregar clientes')).finally(() => setLoading(false)); };
   useEffect(() => { load(); }, []);
 
   const openNew = () => { setEditing(null); setForm({ name: '', email: '', phone: '', document: '', address: '' }); setDialogOpen(true); };
@@ -31,16 +31,16 @@ export default function Clients() {
     e.preventDefault();
     setSaving(true);
     try {
-      if (editing) { await api.put(`/clients/${editing.id}`, form); toast.success('Atualizado'); }
-      else { await api.post('/clients', form); toast.success('Criado'); }
+      if (editing) { await api.put(`/clients/${editing.id}`, form); toast.success('Cliente atualizado', { description: 'Os dados foram salvos.' }); }
+      else { await api.post('/clients', form); toast.success('Cliente cadastrado', { description: 'O cadastro foi adicionado à lista.' }); }
       setDialogOpen(false); load();
-    } catch { toast.error('Erro ao salvar'); } finally { setSaving(false); }
+    } catch (err) { toast.error(err.response?.data?.message || 'Não foi possível salvar o cliente'); } finally { setSaving(false); }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Remover este cliente?')) return;
     setDeletingId(id);
-    try { await api.delete(`/clients/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro'); } finally { setDeletingId(null); }
+    try { await api.delete(`/clients/${id}`); toast.success('Cliente removido'); load(); } catch { toast.error('Erro ao remover cliente'); } finally { setDeletingId(null); }
   };
 
   const filtered = clients.filter(c => {
@@ -92,7 +92,7 @@ export default function Clients() {
             </div>
             <div className="space-y-2"><Label>Documento (CPF/CNPJ)</Label><Input value={form.document} onChange={e => setForm(f => ({ ...f, document: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Endereço</Label><Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} /></div>
-            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Salvar</Button></div>
+            <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar'}</Button></div>
           </form>
         </DialogContent>
       </Dialog>
