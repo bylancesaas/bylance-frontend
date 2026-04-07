@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 const STATUS_MAP = {
   pending:     { label: 'Pendente',      variant: 'warning' },
   in_progress: { label: 'Em Andamento',  variant: 'default' },
-  completed:   { label: 'ConcluÃ­da',     variant: 'success' },
+  completed:   { label: 'Concluída',     variant: 'success' },
   cancelled:   { label: 'Cancelada',     variant: 'destructive' },
 };
 
@@ -38,7 +38,7 @@ const emptyForm = { clientId: '', vehicleId: '', description: '', status: 'pendi
 const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
 // â”€â”€ SearchSelect â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Combobox with live search â€” replaces native <select> for large lists
+// Combobox with live search — replaces native <select> for large lists
 function SearchSelect({ value, onChange, options, placeholder = 'Selecione...', disabled = false, className }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -131,7 +131,7 @@ function SearchSelect({ value, onChange, options, placeholder = 'Selecione...', 
   );
 }
 
-// â”€â”€ QtyControl â€“ stepper input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€ QtyControl – stepper input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function QtyControl({ value, onChange, min = 1 }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -478,7 +478,7 @@ export default function ServiceOrders() {
     if (!sid) return;
     const svc = availableServices.find(s => s.id === sid);
     if (!svc) return;
-    if (selectedServices.some(s => s.serviceId === sid)) { toast.error('ServiÃ§o jÃ¡ adicionado'); return; }
+    if (selectedServices.some(s => s.serviceId === sid)) { toast.error('Serviço já adicionado'); return; }
     setSelectedServices(prev => [...prev, { serviceId: svc.id, serviceName: svc.name, quantity: 1, unitPrice: svc.price, total: svc.price }]);
     setAddServiceId('');
     toast.success(`"${svc.name}" adicionado`, { duration: 1500 });
@@ -501,7 +501,7 @@ export default function ServiceOrders() {
     if (!iid) return;
     const itm = allItems.find(i => i.id === iid);
     if (!itm) return;
-    if (selectedItems.some(i => i.itemId === iid)) { toast.error('Item jÃ¡ adicionado'); return; }
+    if (selectedItems.some(i => i.itemId === iid)) { toast.error('Item já adicionado'); return; }
     setSelectedItems(prev => [...prev, { itemId: itm.id, itemName: itm.name, quantity: 1, unitPrice: itm.sellPrice, total: itm.sellPrice }]);
     setAddItemId('');
     toast.success(`"${itm.name}" adicionado`, { duration: 1500 });
@@ -534,11 +534,11 @@ export default function ServiceOrders() {
       if (editing) {
         await api.put(`/service-orders/${editing.id}`, payload);
         orderId = editing.id;
-        toast.success('OS atualizada', { description: 'As alteraÃ§Ãµes foram salvas.' });
+        toast.success('OS atualizada', { description: 'As alterações foram salvas.' });
       } else {
         const res = await api.post('/service-orders', payload);
         orderId = res.data.data?.id;
-        toast.success('OS criada', { description: 'A ordem de serviÃ§o foi aberta.' });
+        toast.success('OS criada', { description: 'A ordem de serviço foi aberta.' });
       }
       setDialogOpen(false);
       load();
@@ -554,25 +554,25 @@ export default function ServiceOrders() {
     setSavingFinancial(true);
     try {
       await api.post(`/service-orders/${orderId}/to-financial`);
-      toast.success('Receita lanÃ§ada no financeiro!');
+      toast.success('Receita lançada no financeiro!');
       setFinancialDialog(null);
       load();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Erro ao lanÃ§ar');
+      toast.error(err.response?.data?.message || 'Erro ao lançar');
     } finally { setSavingFinancial(false); }
   };
 
   const handleDelete = async (id, label) => {
     const ok = await confirm({
-      title: 'Excluir ordem de serviÃ§o',
-      description: 'A OS serÃ¡ removida permanentemente junto com seus lanÃ§amentos vinculados.',
+      title: 'Excluir ordem de serviço',
+      description: 'A OS será removida permanentemente junto com seus lançamentos vinculados.',
       item: label,
       confirmLabel: 'Excluir OS',
       variant: 'destructive',
     });
     if (!ok) return;
     setDeletingId(id);
-    try { await api.delete(`/service-orders/${id}`); toast.success('Ordem de serviÃ§o removida'); load(); }
+    try { await api.delete(`/service-orders/${id}`); toast.success('Ordem de serviço removida'); load(); }
     catch { toast.error('Erro ao remover OS'); }
     finally { setDeletingId(null); }
   };
@@ -639,10 +639,10 @@ export default function ServiceOrders() {
 
   const handleServiceDelete = async (id, name) => {
     const ok = await confirm({
-      title: 'Excluir serviÃ§o',
-      description: 'O serviÃ§o serÃ¡ removido permanentemente do catÃ¡logo.',
+      title: 'Excluir serviço',
+      description: 'O serviço será removido permanentemente do catálogo.',
       item: name,
-      confirmLabel: 'Excluir serviÃ§o',
+      confirmLabel: 'Excluir serviço',
       variant: 'destructive',
     });
     if (!ok) return;
@@ -655,7 +655,7 @@ export default function ServiceOrders() {
   // â”€â”€ Derived â”€â”€
   const autoTypes = ['auto', 'oficina'];
   const isAutoType = autoTypes.includes(tenant?.businessType);
-  const vehicleLabel = isAutoType ? 'VeÃ­culo' : 'ReferÃªncia';
+  const vehicleLabel = isAutoType ? 'Veículo' : 'Referência';
   const showVehicleCol = isAutoType || orders.some(o => o.vehicle);
 
   const filteredOrders = useMemo(() => orders.filter(o => {
@@ -692,13 +692,13 @@ export default function ServiceOrders() {
   const itemsNotAdded = useMemo(() => allItems.filter(i => !selectedItems.some(si => si.itemId === i.id)), [allItems, selectedItems]);
 
   const serviceOptions = useMemo(() => [
-    { value: '', label: 'Selecionar serviÃ§o...' },
+    { value: '', label: 'Selecionar serviço...' },
     ...servicesNotAdded.map(s => ({ value: s.id, label: s.name, sub: fmt(s.price) })),
   ], [servicesNotAdded]);
 
   const itemOptions = useMemo(() => [
-    { value: '', label: 'Selecionar peÃ§a / produto...' },
-    ...itemsNotAdded.map(i => ({ value: i.id, label: i.name, sub: `${fmt(i.sellPrice)} Â· estoque: ${i.stockQuantity}` })),
+    { value: '', label: 'Selecionar peça / produto...' },
+    ...itemsNotAdded.map(i => ({ value: i.id, label: i.name, sub: `${fmt(i.sellPrice)} · estoque: ${i.stockQuantity}` })),
   ], [itemsNotAdded]);
 
   // â”€â”€ Status filters counts â”€â”€
@@ -755,7 +755,7 @@ export default function ServiceOrders() {
     <div className="animate-fade-in">
       {confirmModal}
       <PageHeader
-        title="Ordens de ServiÃ§o"
+        title="Ordens de Serviço"
         description={activeTab === 'orders'
           ? `${orders.length} ordem${orders.length !== 1 ? 's' : ''}`
           : 'Catálogo de serviços da empresa — base para ordens de serviço'
@@ -763,14 +763,14 @@ export default function ServiceOrders() {
       >
         {activeTab === 'orders'
           ? <Button onClick={openNew}><Plus className="w-4 h-4" /> Nova OS</Button>
-          : <Button onClick={openNewService}><Plus className="w-4 h-4" /> Novo ServiÃ§o</Button>
+          : <Button onClick={openNewService}><Plus className="w-4 h-4" /> Novo Serviço</Button>
         }
       </PageHeader>
 
       {/* â”€â”€ Tabs â”€â”€ */}
       <div className="flex gap-1 mb-5 border-b border-border">
         {[
-          { key: 'orders', label: 'Ordens de ServiÃ§o', icon: FileText },
+          { key: 'orders', label: 'Ordens de Serviço', icon: FileText },
           { key: 'services', label: 'Catálogo de Serviços', icon: Wrench },
         ].map(tab => (
           <button
@@ -824,7 +824,7 @@ export default function ServiceOrders() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder={`Buscar por cliente, descriÃ§Ã£o, ID${showVehicleCol ? ', placa' : ''}, serviÃ§o ou peÃ§a...`}
+                placeholder={`Buscar por cliente, descrição, ID${showVehicleCol ? ', placa' : ''}, serviço ou peça...`}
                 className="pl-9"
                 value={searchOS}
                 onChange={e => setSearchOS(e.target.value)}
@@ -857,11 +857,11 @@ export default function ServiceOrders() {
                   <TableHead className="w-24">ID</TableHead>
                   <TableHead>Cliente</TableHead>
                   {showVehicleCol && <TableHead>{vehicleLabel}</TableHead>}
-                  <TableHead>ServiÃ§os / PeÃ§as</TableHead>
+                  <TableHead>Serviços / Peças</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Data</TableHead>
-                  <TableHead className="text-right">AÃ§Ãµes</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -870,13 +870,13 @@ export default function ServiceOrders() {
                     <TableCell className="font-mono text-xs text-muted-foreground">{o.id.slice(0, 8)}</TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-sm leading-tight">{o.client?.name || 'â€”'}</p>
+                        <p className="font-medium text-sm leading-tight">{o.client?.name || '—'}</p>
                         {o.description && <p className="text-xs text-muted-foreground truncate max-w-[140px]">{o.description}</p>}
                       </div>
                     </TableCell>
                     {showVehicleCol && (
                       <TableCell className="text-sm text-muted-foreground">
-                        {o.vehicle ? `${o.vehicle.brand || ''} ${o.vehicle.model || ''} â€” ${o.vehicle.plate}`.trim() : 'â€”'}
+                        {o.vehicle ? `${o.vehicle.brand || ''} ${o.vehicle.model || ''} — ${o.vehicle.plate}`.trim() : '—'}
                       </TableCell>
                     )}
                     <TableCell className="max-w-[180px]">
@@ -894,7 +894,7 @@ export default function ServiceOrders() {
                           </span>
                         )}
                         {!o.services?.length && !o.items?.length && (
-                          <span className="text-xs text-muted-foreground/40">â€”</span>
+                          <span className="text-xs text-muted-foreground/40">—</span>
                         )}
                       </div>
                     </TableCell>
@@ -918,7 +918,7 @@ export default function ServiceOrders() {
                         )}
                         {o.financials?.length > 0 && (
                           <Badge variant="success" className="gap-1 text-xs">
-                            <CheckCircle className="w-3 h-3" /> LanÃ§ado
+                            <CheckCircle className="w-3 h-3" /> Lançado
                           </Badge>
                         )}
                         <Button variant="ghost" size="icon" title="Imprimir OS" onClick={() => printServiceOrder(o, tenant)}>
@@ -1106,7 +1106,7 @@ export default function ServiceOrders() {
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-base font-semibold leading-tight">
-                {editing ? 'Editar Ordem de ServiÃ§o' : 'Nova Ordem de ServiÃ§o'}
+                {editing ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {editing ? `OS #${editing.id.slice(0, 8)}` : 'Preencha os dados para abrir uma nova OS'}
@@ -1154,24 +1154,24 @@ export default function ServiceOrders() {
               )}
             </Section>
 
-            {/* DescriÃ§Ã£o */}
-            <Section icon={MessageSquare} label="DescriÃ§Ã£o do problema / serviÃ§o solicitado">
+            {/* Descrição */}
+            <Section icon={MessageSquare} label="Descrição do problema / serviço solicitado">
               <Textarea
-                placeholder="Descreva o problema relatado pelo cliente ou o serviÃ§o solicitado..."
+                placeholder="Descreva o problema relatado pelo cliente ou o serviço solicitado..."
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                 className="min-h-[80px] resize-none"
               />
             </Section>
 
-            {/* ServiÃ§os */}
+            {/* Serviços */}
             <Section
               icon={Wrench}
-              label="ServiÃ§os realizados"
+              label="Serviços realizados"
               right={selectedServices.length > 0 && (
                 <span className="text-xs font-normal text-muted-foreground normal-case tracking-normal">
-                  {selectedServices.length} serviÃ§o{selectedServices.length !== 1 ? 's' : ''}
-                  {servicesTotal > 0 && <> Â· <span className="font-semibold text-foreground">{fmt(servicesTotal)}</span></>}
+                  {selectedServices.length} serviço{selectedServices.length !== 1 ? 's' : ''}
+                  {servicesTotal > 0 && <> · <span className="font-semibold text-foreground">{fmt(servicesTotal)}</span></>}
                 </span>
               )}
             >
@@ -1182,7 +1182,7 @@ export default function ServiceOrders() {
                     value={addServiceId}
                     onChange={v => { setAddServiceId(v); if (v) { setTimeout(() => addService(v), 0); } }}
                     options={serviceOptions}
-                    placeholder="Buscar e adicionar serviÃ§o..."
+                    placeholder="Buscar e adicionar serviço..."
                     className="flex-1"
                   />
                   <Button
@@ -1198,7 +1198,7 @@ export default function ServiceOrders() {
               )}
               {availableServices.length === 0 && (
                 <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
-                  Nenhum serviÃ§o cadastrado. Use a aba <strong>ServiÃ§os</strong> para cadastrar o catÃ¡logo.
+                  Nenhum serviço cadastrado. Use a aba <strong>Serviços</strong> para cadastrar o catálogo.
                 </p>
               )}
               {selectedServices.length > 0 ? (
@@ -1206,9 +1206,9 @@ export default function ServiceOrders() {
                   <table className="w-full text-sm">
                     <thead className="bg-muted/40 border-b border-border">
                       <tr>
-                        <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">ServiÃ§o</th>
+                        <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Serviço</th>
                         <th className="text-center px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32">Quantidade</th>
-                        <th className="text-right px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-28">PreÃ§o unit.</th>
+                        <th className="text-right px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-28">Preço unit.</th>
                         <th className="text-right px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">Subtotal</th>
                         <th className="w-10"></th>
                       </tr>
@@ -1247,20 +1247,20 @@ export default function ServiceOrders() {
               ) : (
                 <div className="border-2 border-dashed border-border/60 rounded-xl py-6 flex flex-col items-center gap-1.5">
                   <Wrench className="w-6 h-6 text-muted-foreground/30" />
-                  <p className="text-sm text-muted-foreground">Nenhum serviÃ§o adicionado</p>
-                  <p className="text-xs text-muted-foreground/60">Selecione um serviÃ§o acima para incluir na OS</p>
+                  <p className="text-sm text-muted-foreground">Nenhum serviço adicionado</p>
+                  <p className="text-xs text-muted-foreground/60">Selecione um serviço acima para incluir na OS</p>
                 </div>
               )}
             </Section>
 
-            {/* PeÃ§as / Itens */}
+            {/* Peças / Itens */}
             <Section
               icon={ShoppingCart}
-              label="PeÃ§as / Produtos"
+              label="Peças / Produtos"
               right={selectedItems.length > 0 && (
                 <span className="text-xs font-normal text-muted-foreground normal-case tracking-normal">
                   {selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''}
-                  {itemsTotal > 0 && <> Â· <span className="font-semibold text-foreground">{fmt(itemsTotal)}</span></>}
+                  {itemsTotal > 0 && <> · <span className="font-semibold text-foreground">{fmt(itemsTotal)}</span></>}
                 </span>
               )}
             >
@@ -1270,7 +1270,7 @@ export default function ServiceOrders() {
                     value={addItemId}
                     onChange={v => { setAddItemId(v); if (v) { setTimeout(() => addItem(v), 0); } }}
                     options={itemOptions}
-                    placeholder="Buscar e adicionar peÃ§a / produto..."
+                    placeholder="Buscar e adicionar peça / produto..."
                     className="flex-1"
                   />
                   <Button
@@ -1296,7 +1296,7 @@ export default function ServiceOrders() {
                       <tr>
                         <th className="text-left px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produto</th>
                         <th className="text-center px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-32">Quantidade</th>
-                        <th className="text-right px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-28">PreÃ§o unit.</th>
+                        <th className="text-right px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-28">Preço unit.</th>
                         <th className="text-right px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider w-24">Subtotal</th>
                         <th className="w-10"></th>
                       </tr>
@@ -1335,16 +1335,16 @@ export default function ServiceOrders() {
               ) : (
                 <div className="border-2 border-dashed border-border/60 rounded-xl py-6 flex flex-col items-center gap-1.5">
                   <ShoppingCart className="w-6 h-6 text-muted-foreground/30" />
-                  <p className="text-sm text-muted-foreground">Nenhuma peÃ§a adicionada</p>
+                  <p className="text-sm text-muted-foreground">Nenhuma peça adicionada</p>
                   <p className="text-xs text-muted-foreground/60">Selecione um produto do estoque acima</p>
                 </div>
               )}
             </Section>
 
-            {/* ObservaÃ§Ã£o interna */}
-            <Section icon={MessageSquare} label="ObservaÃ§Ã£o interna">
+            {/* Observação interna */}
+            <Section icon={MessageSquare} label="Observação interna">
               <Textarea
-                placeholder="AnotaÃ§Ãµes internas, notas para a equipe tÃ©cnica... (nÃ£o aparece na impressÃ£o)"
+                placeholder="Anotações internas, notas para a equipe técnica... (não aparece na impressão)"
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 className="min-h-[64px] resize-none"
@@ -1379,7 +1379,7 @@ export default function ServiceOrders() {
             <div className="flex gap-2 justify-end px-6 py-4">
               <Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button>
               <Button type="button" disabled={saving} onClick={handleSubmit}>
-                {saving ? <><Loader2 className="w-4 h-4 animate-spin mr-1.5" />Salvando...</> : editing ? 'Salvar alteraÃ§Ãµes' : 'Abrir OS'}
+                {saving ? <><Loader2 className="w-4 h-4 animate-spin mr-1.5" />Salvando...</> : editing ? 'Salvar alterações' : 'Abrir OS'}
               </Button>
             </div>
           </div>
@@ -1554,7 +1554,7 @@ export default function ServiceOrders() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-600" /> LanÃ§ar no Financeiro?
+              <TrendingUp className="w-5 h-5 text-emerald-600" /> Lançar no Financeiro?
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-1">
@@ -1562,15 +1562,15 @@ export default function ServiceOrders() {
               Deseja registrar{' '}
               <span className="font-semibold text-foreground">{fmt(financialDialog?.total)}</span>
               {financialDialog?.clientName && <> de <span className="font-semibold text-foreground">{financialDialog.clientName}</span></>}{' '}
-              como receita no mÃ³dulo financeiro?
+              como receita no módulo financeiro?
             </p>
             <div className="flex gap-3">
               <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5" disabled={savingFinancial} onClick={() => sendToFinancial(financialDialog?.orderId)}>
-                {savingFinancial ? <Loader2 className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />} Sim, lanÃ§ar
+                {savingFinancial ? <Loader2 className="w-4 h-4 animate-spin" /> : <TrendingUp className="w-4 h-4" />} Sim, lançar
               </Button>
-              <Button variant="outline" className="flex-1" onClick={() => setFinancialDialog(null)}>Agora nÃ£o</Button>
+              <Button variant="outline" className="flex-1" onClick={() => setFinancialDialog(null)}>Agora não</Button>
             </div>
-            <p className="text-xs text-muted-foreground text-center">Se nÃ£o lanÃ§ar agora, o botÃ£o ficarÃ¡ disponÃ­vel na OS.</p>
+            <p className="text-xs text-muted-foreground text-center">Se não lançar agora, o botão ficará disponível na OS.</p>
           </div>
         </DialogContent>
       </Dialog>
