@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useConfirm } from '@/components/ConfirmModal';
 import api from '@/api/client';
 import PageHeader from '@/components/PageHeader';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -15,6 +16,7 @@ import { toast } from 'sonner';
 const INITIAL = { name: '', description: '', capacity: 2, basePrice: 0, amenities: '' };
 
 export default function RoomTypes() {
+  const [confirmModal, confirm] = useConfirm();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -41,8 +43,15 @@ export default function RoomTypes() {
     finally { setSaving(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Remover este tipo de quarto?')) return;
+  const handleDelete = async (id, name) => {
+    const ok = await confirm({
+      title: 'Remover tipo de quarto',
+      description: 'O tipo será removido permanentemente. Quartos vinculados podem ser afetados.',
+      item: name,
+      confirmLabel: 'Remover tipo',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     setDeletingId(id);
     try { await api.delete(`/room-types/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro ao remover'); } finally { setDeletingId(null); }
   };
@@ -51,6 +60,7 @@ export default function RoomTypes() {
 
   return (
     <div className="animate-fade-in">
+      {confirmModal}
       <PageHeader title="Tipos de Quarto" description={`${list.length} tipos cadastrados`}><Button onClick={openNew}><Plus className="w-4 h-4" /> Novo Tipo</Button></PageHeader>
 
       <div className="bg-card border rounded-xl overflow-x-auto shadow-card">
@@ -66,7 +76,7 @@ export default function RoomTypes() {
                 <TableCell className="max-w-[200px] truncate text-muted-foreground text-xs">{t.amenities || '-'}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(t)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" disabled={deletingId === t.id} onClick={() => handleDelete(t.id)}>{deletingId === t.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
+                  <Button variant="ghost" size="icon" disabled={deletingId === t.id} onClick={() => handleDelete(t.id, t.name)}>{deletingId === t.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                 </TableCell>
               </TableRow>
             ))}

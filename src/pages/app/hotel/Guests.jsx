@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useConfirm } from '@/components/ConfirmModal';
 import api from '@/api/client';
 import PageHeader from '@/components/PageHeader';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -15,6 +16,7 @@ import { toast } from 'sonner';
 const INITIAL = { name: '', email: '', phone: '', document: '', documentType: 'cpf', nationality: 'BR', address: '', notes: '', vip: false };
 
 export default function Guests() {
+  const [confirmModal, confirm] = useConfirm();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -41,8 +43,15 @@ export default function Guests() {
     finally { setSaving(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Remover este hóspede?')) return;
+  const handleDelete = async (id, name) => {
+    const ok = await confirm({
+      title: 'Remover hóspede',
+      description: 'O hóspede será removido permanentemente do sistema.',
+      item: name,
+      confirmLabel: 'Remover hóspede',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     setDeletingId(id);
     try { await api.delete(`/guests/${id}`); toast.success('Hóspede removido'); load(); } catch { toast.error('Erro ao remover'); } finally { setDeletingId(null); }
   };
@@ -56,6 +65,7 @@ export default function Guests() {
 
   return (
     <div className="animate-fade-in">
+      {confirmModal}
       <PageHeader title="Hóspedes" description={`${list.length} cadastrados`}><Button onClick={openNew}><Plus className="w-4 h-4" /> Novo</Button></PageHeader>
       <div className="mb-4 relative w-full sm:max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar por nome, documento..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} /></div>
 
@@ -74,7 +84,7 @@ export default function Guests() {
                 <TableCell><Badge variant="secondary">{g._count?.reservations ?? 0}</Badge></TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(g)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" disabled={deletingId === g.id} onClick={() => handleDelete(g.id)}>{deletingId === g.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
+                  <Button variant="ghost" size="icon" disabled={deletingId === g.id} onClick={() => handleDelete(g.id, g.name)}>{deletingId === g.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                 </TableCell>
               </TableRow>
             ))}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useConfirm } from '@/components/ConfirmModal';
 import api from '@/api/client';
 import PageHeader from '@/components/PageHeader';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -12,6 +13,7 @@ import { Plus, Pencil, Trash2, Search, Wrench, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Services() {
+  const [confirmModal, confirm] = useConfirm();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -38,8 +40,15 @@ export default function Services() {
     } catch (err) { toast.error(err.response?.data?.message || 'Não foi possível salvar o serviço'); } finally { setSaving(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Remover?')) return;
+  const handleDelete = async (id, name) => {
+    const ok = await confirm({
+      title: 'Excluir serviço',
+      description: 'O serviço será removido permanentemente do catálogo.',
+      item: name,
+      confirmLabel: 'Excluir serviço',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     setDeletingId(id);
     try { await api.delete(`/services/${id}`); toast.success('Serviço removido'); load(); } catch { toast.error('Erro ao remover serviço'); } finally { setDeletingId(null); }
   };
@@ -50,6 +59,7 @@ export default function Services() {
 
   return (
     <div className="animate-fade-in">
+      {confirmModal}
       <PageHeader title="Serviços" description={`${services.length} serviços`}><Button onClick={openNew}><Plus className="w-4 h-4" /> Novo</Button></PageHeader>
       <div className="mb-4 relative w-full sm:max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar por nome..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} /></div>
       <div className="bg-card border rounded-xl overflow-x-auto shadow-card">
@@ -64,7 +74,7 @@ export default function Services() {
                 <TableCell>{s.estimatedTime || '-'}</TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="icon" onClick={() => openEdit(s)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="icon" disabled={deletingId === s.id} onClick={() => handleDelete(s.id)}>{deletingId === s.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
+                  <Button variant="ghost" size="icon" disabled={deletingId === s.id} onClick={() => handleDelete(s.id, s.name)}>{deletingId === s.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                 </TableCell>
               </TableRow>
             ))}

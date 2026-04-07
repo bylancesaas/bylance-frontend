@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useConfirm } from '@/components/ConfirmModal';
 import api from '@/api/client';
 import PageHeader from '@/components/PageHeader';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -21,6 +22,7 @@ const STATUS_MAP = {
 const INITIAL = { number: '', floor: 1, roomTypeId: '', status: 'available', notes: '' };
 
 export default function Rooms() {
+  const [confirmModal, confirm] = useConfirm();
   const [rooms, setRooms] = useState([]);
   const [roomTypes, setRoomTypes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,8 +61,15 @@ export default function Rooms() {
     try { await api.patch(`/rooms/${id}/status`, { status }); toast.success('Status atualizado'); load(); } catch { toast.error('Erro ao atualizar status'); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Remover este quarto?')) return;
+  const handleDelete = async (id, number) => {
+    const ok = await confirm({
+      title: 'Remover quarto',
+      description: 'O quarto será removido permanentemente. Reservas vinculadas podem ser afetadas.',
+      item: number ? `Quarto ${number}` : undefined,
+      confirmLabel: 'Remover quarto',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     setDeletingId(id);
     try { await api.delete(`/rooms/${id}`); toast.success('Removido'); load(); } catch { toast.error('Erro ao remover'); } finally { setDeletingId(null); }
   };
@@ -79,6 +88,7 @@ export default function Rooms() {
 
   return (
     <div className="animate-fade-in">
+      {confirmModal}
       <PageHeader title="Quartos" description={`${rooms.length} quartos no total`}><Button onClick={openNew}><Plus className="w-4 h-4" /> Novo Quarto</Button></PageHeader>
 
       <div className="flex flex-wrap items-center gap-3 mb-5">
@@ -138,7 +148,7 @@ export default function Rooms() {
             </div>
             <div className="space-y-2"><Label>Observações</Label><Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} /></div>
             <div className="flex gap-2 justify-end">
-              {editing && <Button type="button" variant="destructive" disabled={deletingId === editing?.id} onClick={() => handleDelete(editing.id)} className="mr-auto">{deletingId === editing?.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Excluir</Button>}
+              {editing && <Button type="button" variant="destructive" disabled={deletingId === editing?.id} onClick={() => handleDelete(editing.id, editing?.number)} className="mr-auto">{deletingId === editing?.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Excluir</Button>}
               <Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={saving}>{saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar'}</Button>
             </div>

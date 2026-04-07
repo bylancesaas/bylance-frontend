@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useConfirm } from '@/components/ConfirmModal';
 import api from '@/api/client';
 import PageHeader from '@/components/PageHeader';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -29,6 +30,7 @@ const toDateInput = (d) => d ? new Date(d).toISOString().slice(0, 10) : '';
 const INITIAL = { guestId: '', roomId: '', checkIn: '', checkOut: '', status: 'confirmed', adults: 1, children: 0, totalPrice: 0, notes: '', source: 'direct' };
 
 export default function Reservations() {
+  const [confirmModal, confirm] = useConfirm();
   const [list, setList] = useState([]);
   const [guests, setGuests] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -80,8 +82,15 @@ export default function Reservations() {
     try { await api.patch(`/reservations/${id}/status`, { status }); toast.success('Status atualizado'); load(); } catch { toast.error('Erro ao atualizar'); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Remover esta reserva?')) return;
+  const handleDelete = async (id, label) => {
+    const ok = await confirm({
+      title: 'Remover reserva',
+      description: 'A reserva será removida permanentemente e não pode ser desfeita.',
+      item: label,
+      confirmLabel: 'Remover reserva',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     setDeletingId(id);
     try { await api.delete(`/reservations/${id}`); toast.success('Removida'); load(); } catch { toast.error('Erro ao remover'); } finally { setDeletingId(null); }
   };
@@ -96,6 +105,7 @@ export default function Reservations() {
 
   return (
     <div className="animate-fade-in">
+      {confirmModal}
       <PageHeader title="Reservas" description={`${list.length} reservas`}><Button onClick={openNew}><Plus className="w-4 h-4" /> Nova Reserva</Button></PageHeader>
 
       <div className="flex flex-wrap items-center gap-3 mb-5">
@@ -127,7 +137,7 @@ export default function Reservations() {
                   </TableCell>
                   <TableCell className="text-right space-x-1">
                     <Button variant="ghost" size="icon" onClick={() => openEdit(r)}><Pencil className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" disabled={deletingId === r.id} onClick={() => handleDelete(r.id)}>{deletingId === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
+                    <Button variant="ghost" size="icon" disabled={deletingId === r.id} onClick={() => handleDelete(r.id, r.guest?.name ? `${r.guest.name} — Quarto ${r.room?.number}` : `Quarto ${r.room?.number}`)}>{deletingId === r.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}</Button>
                   </TableCell>
                 </TableRow>
               );
