@@ -79,7 +79,7 @@ function SearchSelect({ value, onChange, options, placeholder = 'Selecione...', 
         disabled={disabled}
         onClick={() => setOpen(v => !v)}
         className={cn(
-          'flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm',
+          'flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3 py-2 text-sm',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           'disabled:opacity-50 disabled:pointer-events-none',
           !selected && 'text-muted-foreground',
@@ -991,7 +991,7 @@ export default function ServiceOrders() {
               value={filterServiceCategory}
               onChange={e => setFilterServiceCategory(e.target.value)}
               className={cn(
-                'h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'h-10 rounded-md border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 filterServiceCategory && 'border-primary bg-primary/5 text-primary',
               )}
             >
@@ -1001,7 +1001,7 @@ export default function ServiceOrders() {
             <select
               value={sortService}
               onChange={e => setSortService(e.target.value)}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-10 rounded-md border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="name-asc">Nome A–Z</option>
               <option value="name-desc">Nome Z–A</option>
@@ -1134,7 +1134,7 @@ export default function ServiceOrders() {
                   <select
                     value={form.status}
                     onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {STATUS_ORDER.map(s => <option key={s} value={s}>{STATUS_MAP[s].label}</option>)}
                   </select>

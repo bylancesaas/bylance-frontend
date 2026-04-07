@@ -93,7 +93,7 @@ export default function Rooms() {
 
       <div className="flex flex-wrap items-center gap-3 mb-5">
         <div className="relative w-full sm:max-w-xs"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar quarto..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} /></div>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="h-10 rounded-md border border-input bg-card px-3 text-sm">
           <option value="">Todos os status</option>
           {Object.entries(STATUS_MAP).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
@@ -136,13 +136,13 @@ export default function Rooms() {
               <div className="space-y-2"><Label>Andar</Label><Input type="number" min="0" value={form.floor} onChange={e => setForm(f => ({ ...f, floor: e.target.value }))} /></div>
             </div>
             <div className="space-y-2"><Label>Tipo de quarto *</Label>
-              <select value={form.roomTypeId} onChange={e => setForm(f => ({ ...f, roomTypeId: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required>
+              <select value={form.roomTypeId} onChange={e => setForm(f => ({ ...f, roomTypeId: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm" required>
                 <option value="">Selecione...</option>
                 {roomTypes.map(t => <option key={t.id} value={t.id}>{t.name} — R${t.basePrice.toFixed(2)}</option>)}
               </select>
             </div>
             <div className="space-y-2"><Label>Status</Label>
-              <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm">
                 {Object.entries(STATUS_MAP).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
               </select>
             </div>

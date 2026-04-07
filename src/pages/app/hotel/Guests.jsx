@@ -101,7 +101,7 @@ export default function Guests() {
               <div className="space-y-2 sm:col-span-2"><Label>Nome *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required /></div>
               <div className="space-y-2"><Label>Documento</Label><Input value={form.document} onChange={e => setForm(f => ({ ...f, document: e.target.value }))} placeholder="CPF / Passaporte" /></div>
               <div className="space-y-2"><Label>Tipo</Label>
-                <select value={form.documentType} onChange={e => setForm(f => ({ ...f, documentType: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <select value={form.documentType} onChange={e => setForm(f => ({ ...f, documentType: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm">
                   <option value="cpf">CPF</option><option value="rg">RG</option><option value="passport">Passaporte</option><option value="other">Outro</option>
                 </select>
               </div>
@@ -109,7 +109,7 @@ export default function Guests() {
               <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></div>
               <div className="space-y-2"><Label>Nacionalidade</Label><Input value={form.nationality} onChange={e => setForm(f => ({ ...f, nationality: e.target.value }))} /></div>
               <div className="space-y-2"><Label>Endereço</Label><Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} /></div>
-              <div className="space-y-2 sm:col-span-2"><Label>Observações</Label><textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none" /></div>
+              <div className="space-y-2 sm:col-span-2"><Label>Observações</Label><textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="flex w-full rounded-md border border-input bg-card px-3 py-2 text-sm resize-none" /></div>
               <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.vip} onChange={e => setForm(f => ({ ...f, vip: e.target.checked }))} className="w-4 h-4 rounded accent-primary" /><span className="text-sm font-medium flex items-center gap-1"><Star className="w-3.5 h-3.5 text-amber-500" />Hóspede VIP</span></label>
             </div>
             <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar'}</Button></div>

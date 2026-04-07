@@ -43,11 +43,11 @@ export default function AdminLayout() {
           ${collapsed ? 'w-16' : 'w-64'}`}
       >
         {/* Header */}
-        <div className={`flex items-center border-b border-sidebar-border h-[65px] shrink-0 ${collapsed ? 'justify-center px-2' : 'px-5'}`}>
+        <div className={`flex items-center border-b border-sidebar-border h-[110px] shrink-0 ${collapsed ? 'justify-center px-2' : 'px-5'}`}>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-black tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Bylance</h1>
-              <p className="text-2xs text-sidebar-foreground/40 mt-0.5">Painel do Super Admin</p>
+              <img src="/assets/Horizontal.png" alt="Bylance" className="h-16 w-auto brightness-0 invert mt-5" />
+              <p className="text-2xs text-sidebar-foreground/40 mt-2">Painel do Super Admin</p>
             </div>
           )}
           <button
@@ -124,7 +124,7 @@ export default function AdminLayout() {
           <button onClick={() => setSidebarOpen(true)} className="p-1 rounded-lg hover:bg-muted transition-colors">
             <Menu className="w-5 h-5" />
           </button>
-          <h1 className="font-semibold text-sm">Bylance Admin</h1>
+          <img src="/assets/Horizontal.png" alt="Bylance" className="h-6 w-auto" />
         </header>
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <Outlet />

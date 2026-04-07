@@ -459,6 +459,48 @@ function StepPlano({ form, errors, onChange }) {
   );
 }
 
+// ── Color extraction via Canvas API ─────────────────────────────────────────
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+}
+function adjustHex(hex, delta) {
+  const parse = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  const [r,g,b] = parse(hex);
+  return rgbToHex(...[r,g,b].map(v => Math.min(255, Math.max(0, v + delta))));
+}
+function extractColorsFromImage(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 80;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, 80, 80);
+        const { data } = ctx.getImageData(0, 0, 80, 80);
+        const map = {};
+        for (let i = 0; i < data.length; i += 4) {
+          const [r, g, b, a] = [data[i], data[i+1], data[i+2], data[i+3]];
+          if (a < 128) continue;                           // transparent
+          if (r > 235 && g > 235 && b > 235) continue;   // near-white
+          if (r < 20  && g < 20  && b < 20)  continue;   // near-black
+          const key = `${Math.round(r/32)*32},${Math.round(g/32)*32},${Math.round(b/32)*32}`;
+          map[key] = (map[key] || 0) + 1;
+        }
+        const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
+        if (!sorted.length) { resolve(null); return; }
+        const [r, g, b] = sorted[0][0].split(',').map(Number);
+        const primary = rgbToHex(r, g, b);
+        // Secondary: same hue but 40 pts lighter
+        const secondary = adjustHex(primary, 40);
+        resolve({ primary, secondary });
+      } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
 function StepVisual({ form, onChange, modules, onToggleModule, logoPreview, setLogoPreview, setLogoFile }) {
   const fileInputRef = useRef(null);
 
@@ -466,8 +508,15 @@ function StepVisual({ form, onChange, modules, onToggleModule, logoPreview, setL
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { toast.error('Imagem muito grande. Máximo 2MB.'); return; }
+    const url = URL.createObjectURL(file);
     setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
+    setLogoPreview(url);
+    extractColorsFromImage(url).then(colors => {
+      if (!colors) return;
+      onChange('primaryColor', colors.primary);
+      onChange('secondaryColor', colors.secondary);
+      toast.success('Cores extraídas da logo!', { description: 'Ajuste abaixo se quiser personalizar.' });
+    });
   };
 
   const removeLogo = () => {

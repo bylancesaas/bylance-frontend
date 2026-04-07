@@ -33,8 +33,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 px-4">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-black tracking-tight bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent mb-2">Bylance</h1>
-          <p className="text-muted-foreground text-sm mt-1">Entre na sua conta</p>
+          <img src="/assets/Horizontal.png" alt="Bylance" className="h-32 w-auto mx-auto mb-3" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 bg-card border rounded-2xl p-6 shadow-card">

@@ -92,7 +92,7 @@ function SearchSelect({ value, onChange, options, placeholder = 'Selecione...', 
         type="button" disabled={disabled}
         onClick={() => setOpen(v => !v)}
         className={cn(
-          'flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm',
+          'flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3 py-2 text-sm',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none',
           !selected && 'text-muted-foreground',
         )}

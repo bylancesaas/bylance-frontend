@@ -82,7 +82,7 @@ export default function Housekeeping() {
 
       <div className="flex flex-wrap items-center gap-3 mb-5">
         <div className="relative w-full sm:max-w-xs"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" /><Input placeholder="Buscar quarto..." className="pl-10" value={search} onChange={e => setSearch(e.target.value)} /></div>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="h-10 rounded-md border border-input bg-card px-3 text-sm">
           <option value="">Todos os status</option>
           {Object.entries(STATUS_MAP).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
@@ -105,7 +105,7 @@ export default function Housekeeping() {
                   </TableCell>
                   <TableCell>{t.assignedTo || '-'}</TableCell>
                   <TableCell>
-                    <select value={t.status} onChange={e => handleStatusChange(t.id, e.target.value)} className="h-7 rounded border border-input bg-background px-2 text-xs">
+                    <select value={t.status} onChange={e => handleStatusChange(t.id, e.target.value)} className="h-7 rounded border border-input bg-card px-2 text-xs">
                       {Object.entries(STATUS_MAP).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>
                   </TableCell>
@@ -129,24 +129,24 @@ export default function Housekeeping() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Quarto *</Label>
-                <select value={form.roomId} onChange={e => setForm(f => ({ ...f, roomId: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required>
+                <select value={form.roomId} onChange={e => setForm(f => ({ ...f, roomId: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm" required>
                   <option value="">Selecione...</option>
                   {rooms.map(r => <option key={r.id} value={r.id}>{r.number} — {r.roomType?.name}</option>)}
                 </select>
               </div>
               <div className="space-y-2"><Label>Tipo</Label>
-                <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm">
                   {Object.entries(TYPE_MAP).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
               <div className="space-y-2"><Label>Prioridade</Label>
-                <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} className="flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm">
                   {Object.entries(PRIORITY_MAP).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
               <div className="space-y-2"><Label>Responsável</Label><Input value={form.assignedTo} onChange={e => setForm(f => ({ ...f, assignedTo: e.target.value }))} placeholder="Nome do responsável" /></div>
               <div className="space-y-2 sm:col-span-2"><Label>Agendado para</Label><Input type="datetime-local" value={form.scheduledAt} onChange={e => setForm(f => ({ ...f, scheduledAt: e.target.value }))} /></div>
-              <div className="space-y-2 sm:col-span-2"><Label>Notas</Label><textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none" /></div>
+              <div className="space-y-2 sm:col-span-2"><Label>Notas</Label><textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} className="flex w-full rounded-md border border-input bg-card px-3 py-2 text-sm resize-none" /></div>
             </div>
             <div className="flex gap-2 justify-end"><Button type="button" variant="outline" disabled={saving} onClick={() => setDialogOpen(false)}>Cancelar</Button><Button type="submit" disabled={saving}>{saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Salvar'}</Button></div>
           </form>
