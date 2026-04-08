@@ -7,12 +7,15 @@ import {
 import api from '@/api/client';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useTenant } from '@/contexts/TenantContext';
+import { Button } from '@/components/ui/button';
+import { useSensitiveValues } from '@/lib/sensitiveValues';
 import {
   DollarSign, Shield, Users, ClipboardList,
   ChevronRight, TrendingUp, TrendingDown, Minus,
   AlertTriangle, Wrench, Package,
   UserPlus, BarChart3,
   Sparkles, ArrowRight, PlusCircle, Clock, Star,
+  Eye, EyeOff,
 } from 'lucide-react';
 
 // ── Formatters ───────────────────────────────────────────────────────────────
@@ -144,6 +147,7 @@ function ChartTooltip({ active, payload, label, formatter }) {
 export default function Dashboard() {
   const { tenant } = useTenant();
   const navigate = useNavigate();
+  const { isVisible: isValuesVisible, toggleVisibility: toggleValuesVisibility } = useSensitiveValues(false);
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState([]);
   const [clients, setClients] = useState([]);
@@ -268,6 +272,8 @@ export default function Dashboard() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
   const todayLabel = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const hiddenMoneyLabel = 'R$ *****';
+  const formatMoney = (value) => (isValuesVisible ? fmtBRL(value) : hiddenMoneyLabel);
 
   if (loading) return <LoadingSpinner />;
 
@@ -284,15 +290,27 @@ export default function Dashboard() {
           </h1>
           <p className="text-sm text-muted-foreground capitalize mt-0.5">{todayLabel}</p>
         </div>
-        {stats.lateOrders > 0 && (
-          <button
-            onClick={() => navigate('/service-orders')}
-            className="hidden sm:flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors flex-shrink-0"
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleValuesVisibility}
+            aria-label={isValuesVisible ? 'Ocultar valores' : 'Mostrar valores'}
+            title={isValuesVisible ? 'Ocultar valores' : 'Mostrar valores'}
+            className="h-8 w-8"
           >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            {stats.lateOrders} OS atrasada{stats.lateOrders > 1 ? 's' : ''}
-          </button>
-        )}
+            {isValuesVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </Button>
+          {stats.lateOrders > 0 && (
+            <button
+              onClick={() => navigate('/service-orders')}
+              className="hidden sm:flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors flex-shrink-0"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              {stats.lateOrders} OS atrasada{stats.lateOrders > 1 ? 's' : ''}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── KPIs ────────────────────────────────────────────────────────────── */}
@@ -315,10 +333,10 @@ export default function Dashboard() {
         />
         <KpiCard
           title="Receita do mês"
-          value={fmtBRL(stats.monthRevenue)}
+          value={formatMoney(stats.monthRevenue)}
           sub={stats.monthProfit >= 0
-            ? `Resultado: ${fmtBRL(stats.monthProfit)}`
-            : `Déficit: ${fmtBRL(Math.abs(stats.monthProfit))}`}
+            ? `Resultado: ${formatMoney(stats.monthProfit)}`
+            : `Déficit: ${formatMoney(Math.abs(stats.monthProfit))}`}
           icon={stats.monthProfit >= 0 ? TrendingUp : TrendingDown}
           accent={stats.monthProfit >= 0 ? 'green' : 'red'}
           trend={stats.revTrend !== null ? Math.sign(stats.revTrend) : undefined}
@@ -327,7 +345,7 @@ export default function Dashboard() {
         />
         <KpiCard
           title="Receita de hoje"
-          value={fmtBRL(stats.todayRevenue)}
+          value={formatMoney(stats.todayRevenue)}
           sub="entradas registradas"
           icon={DollarSign}
           accent="blue"
@@ -343,7 +361,7 @@ export default function Dashboard() {
         />
         <KpiCard
           title="Ticket médio"
-          value={fmtBRL(stats.ticketMedio)}
+          value={formatMoney(stats.ticketMedio)}
           sub="por OS concluída"
           icon={Star}
           accent="purple"
@@ -396,7 +414,7 @@ export default function Dashboard() {
                 width={42}
               />
               <ReTooltip
-                content={<ChartTooltip formatter={(v) => fmtBRL(v)} />}
+                content={<ChartTooltip formatter={(v) => formatMoney(v)} />}
                 cursor={{ fill: 'hsl(var(--muted) / 0.5)', radius: 4 }}
               />
               <Bar name="Receitas" dataKey="Receitas" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={28} />
@@ -413,7 +431,7 @@ export default function Dashboard() {
               Despesas
             </div>
             <div className="ml-auto text-xs text-muted-foreground">
-              Despesas do mês: <span className="font-semibold text-foreground">{fmtBRL(stats.monthExpenses)}</span>
+              Despesas do mês: <span className="font-semibold text-foreground">{formatMoney(stats.monthExpenses)}</span>
             </div>
           </div>
         </div>

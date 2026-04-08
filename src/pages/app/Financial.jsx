@@ -14,10 +14,11 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 import {
   Pencil, Trash2, TrendingUp, TrendingDown, DollarSign, FileText,
   Wrench, ShoppingCart, Search, X, Loader2,
-  Tag, BarChart3, ArrowUpRight, ArrowDownRight, ClipboardList,
+  Tag, BarChart3, ArrowUpRight, ArrowDownRight, ClipboardList, Eye, EyeOff,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useSensitiveValues } from '@/lib/sensitiveValues';
 
 // ── Constants ─────────────────────────────────────────────────────────────────────────────
 const PERIOD_OPTIONS = [
@@ -84,13 +85,13 @@ function pctChange(curr, prev) {
 }
 
 // ── CategoryBar ───────────────────────────────────────────────────────────────────────
-function CategoryBar({ label, total, maxVal }) {
+function CategoryBar({ label, total, maxVal, formatValue = fmtShort }) {
   const pct = maxVal > 0 ? (total / maxVal) * 100 : 0;
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
         <span className="font-medium truncate max-w-[140px]" title={label}>{label}</span>
-        <span className="text-muted-foreground ml-2 shrink-0">{fmtShort(total)}</span>
+        <span className="text-muted-foreground ml-2 shrink-0">{formatValue(total)}</span>
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div
@@ -134,7 +135,7 @@ function MoneyInput({ value, onChange, ...props }) {
 }
 
 // ── Chart tooltip ───────────────────────────────────────────────────────────────────────
-function ChartTooltip({ active, payload, label }) {
+function ChartTooltip({ active, payload, label, formatter = fmt }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border rounded-xl px-3 py-2 shadow-xl text-xs">
@@ -143,7 +144,7 @@ function ChartTooltip({ active, payload, label }) {
         <div key={p.dataKey} className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: p.fill }} />
           <span className="text-muted-foreground">{p.name}:</span>
-          <span className="font-medium ml-auto pl-3">{fmt(p.value)}</span>
+          <span className="font-medium ml-auto pl-3">{formatter(p.value)}</span>
         </div>
       ))}
     </div>
@@ -191,6 +192,7 @@ export default function Financial() {
   const [confirmModal, confirm] = useConfirm();
   const [records, setRecords]   = useState([]);
   const [loading, setLoading]   = useState(true);
+  const { isVisible: isValuesVisible, toggleVisibility: toggleValuesVisibility } = useSensitiveValues(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing]       = useState(null);
@@ -322,6 +324,11 @@ export default function Financial() {
 
   const periodLabel = PERIOD_OPTIONS.find(p => p.key === activePeriod)?.label || '';
 
+  const hiddenMoneyLabel = 'R$ *****';
+  const formatMoney = (value) => (isValuesVisible ? fmt(value) : hiddenMoneyLabel);
+  const formatShortMoney = (value) => (isValuesVisible ? fmtShort(value) : hiddenMoneyLabel);
+  const formatSignedMoney = (type, value) => (isValuesVisible ? `${type === 'expense' ? '−' : '+'}${fmt(value)}` : '*****');
+
   const openNew = (defaultType = 'revenue') => {
     setEditing(null);
     setForm({ ...emptyForm, type: defaultType });
@@ -394,6 +401,15 @@ export default function Financial() {
 
       <PageHeader title="Financeiro" description="Gestão de receitas, despesas e fluxo de caixa">
         <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleValuesVisibility}
+            aria-label={isValuesVisible ? 'Ocultar valores' : 'Mostrar valores'}
+            title={isValuesVisible ? 'Ocultar valores' : 'Mostrar valores'}
+          >
+            {isValuesVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </Button>
           <Button variant="outline" onClick={() => openNew('expense')}
             className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300">
             <TrendingDown className="w-4 h-4" /> Nova despesa
@@ -435,21 +451,21 @@ export default function Financial() {
       {/* ── Main KPI cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         <KpiCard
-          label="Receitas" value={fmt(kpi.revenue)}
+          label="Receitas" value={formatMoney(kpi.revenue)}
           icon={TrendingUp} iconBg="bg-emerald-50" iconColor="text-emerald-600"
           valueColor="text-emerald-600"
           pct={prevKpi ? pctChange(kpi.revenue, prevKpi.revenue) : undefined}
           periodLabel={periodLabel}
         />
         <KpiCard
-          label="Despesas" value={fmt(kpi.expense)}
+          label="Despesas" value={formatMoney(kpi.expense)}
           icon={TrendingDown} iconBg="bg-red-50" iconColor="text-red-600"
           valueColor="text-red-600"
           pct={prevKpi ? pctChange(kpi.expense, prevKpi.expense) : undefined}
           periodLabel={periodLabel}
         />
         <KpiCard
-          label="Lucro líquido" value={fmt(kpi.profit)}
+          label="Lucro líquido" value={formatMoney(kpi.profit)}
           icon={DollarSign}
           iconBg={kpi.profit >= 0 ? 'bg-white/20' : 'bg-muted'}
           iconColor={kpi.profit >= 0 ? 'text-primary-foreground' : 'text-muted-foreground'}
@@ -493,7 +509,7 @@ export default function Financial() {
                   axisLine={false} tickLine={false}
                 />
                 <YAxis hide />
-                <Tooltip content={<ChartTooltip />} cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }} />
+                <Tooltip content={<ChartTooltip formatter={formatMoney} />} cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }} />
                 <Bar dataKey="revenue" name="Receitas" fill="#10b981" radius={[3, 3, 0, 0]} />
                 <Bar dataKey="expense" name="Despesas" fill="#ef4444" radius={[3, 3, 0, 0]} />
               </BarChart>
@@ -519,7 +535,7 @@ export default function Financial() {
             ) : (
               <div className="space-y-3.5">
                 {categoryBreakdown.map(c => (
-                  <CategoryBar key={c.cat} label={c.cat} total={c.total} maxVal={maxCatTotal} />
+                  <CategoryBar key={c.cat} label={c.cat} total={c.total} maxVal={maxCatTotal} formatValue={formatShortMoney} />
                 ))}
               </div>
             )}
@@ -623,7 +639,7 @@ export default function Financial() {
                 </TableCell>
                 <TableCell className="text-right">
                   <span className={cn('font-semibold tabular-nums', r.type === 'revenue' ? 'text-emerald-600' : 'text-red-600')}>
-                    {r.type === 'expense' ? '−' : '+'}{fmt(r.value)}
+                    {formatSignedMoney(r.type, r.value)}
                   </span>
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{dateBR(r.date)}</TableCell>
@@ -801,7 +817,7 @@ export default function Financial() {
                           <tr key={s.id} className="border-t">
                             <td className="px-3 py-2 font-medium">{s.service?.name}</td>
                             <td className="px-2 py-2 text-center text-muted-foreground">{s.quantity}</td>
-                            <td className="px-3 py-2 text-right font-semibold">{fmt(s.total)}</td>
+                            <td className="px-3 py-2 text-right font-semibold">{formatMoney(s.total)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -828,7 +844,7 @@ export default function Financial() {
                           <tr key={i.id} className="border-t">
                             <td className="px-3 py-2 font-medium">{i.item?.name}</td>
                             <td className="px-2 py-2 text-center text-muted-foreground">{i.quantity}</td>
-                            <td className="px-3 py-2 text-right font-semibold">{fmt(i.total)}</td>
+                            <td className="px-3 py-2 text-right font-semibold">{formatMoney(i.total)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -838,7 +854,7 @@ export default function Financial() {
               )}
               <div className="bg-muted/30 rounded-xl px-4 py-3 flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Valor do lançamento</span>
-                <span className="text-xl font-bold">{fmt(detailDialog.value)}</span>
+                <span className="text-xl font-bold">{formatMoney(detailDialog.value)}</span>
               </div>
             </div>
           )}
