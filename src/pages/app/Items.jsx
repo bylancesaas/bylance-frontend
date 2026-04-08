@@ -14,8 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import {
   Plus, Pencil, Trash2, Search, Package, X, AlertTriangle, Loader2,
   DollarSign, Tag, Layers, Hash, FileText, ShoppingCart, Boxes,
-  TrendingUp, ArrowUpDown, ArrowUp, ArrowDown,
-  Filter, SlidersHorizontal, CircleOff, PackageX, TriangleAlert,
+  TrendingUp, ArrowUpDown, ArrowUp, ArrowDown, Eye, Clock, ArrowDownCircle, ArrowUpCircle,
+  Filter, SlidersHorizontal, CircleOff, PackageX, TriangleAlert, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -232,6 +232,180 @@ function ActiveFilter({ label, onRemove }) {
   );
 }
 
+function dateTimeBR(value) {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString('pt-BR');
+}
+
+function ItemInfoRow({ label, value }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-2 border-b border-border last:border-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs font-medium text-right max-w-[62%]">{value || '—'}</span>
+    </div>
+  );
+}
+
+function ItemDetailDrawer({ item, onClose, onEdit, onEntry, onExit }) {
+  const [tab, setTab] = useState('info');
+
+  useEffect(() => {
+    setTab('info');
+  }, [item?.id]);
+
+  if (!item) return null;
+
+  const stockValue = (item.stockQuantity || 0) * (item.costPrice || 0);
+  const m = item.sellPrice > 0
+    ? (((item.sellPrice - item.costPrice) / item.sellPrice) * 100)
+    : 0;
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Fechar detalhes"
+        className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+        onClick={onClose}
+      />
+
+      <aside className="fixed top-0 right-0 z-[71] h-full w-full max-w-md bg-card border-l border-border shadow-overlay flex flex-col animate-in slide-in-from-right duration-200">
+        <div className="px-5 py-4 border-b border-border">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <StockBadge qty={item.stockQuantity || 0} unit={item.unit} />
+                {item.sku ? <span className="text-[11px] font-mono text-muted-foreground truncate">{item.sku}</span> : null}
+              </div>
+              <h3 className="text-base font-semibold leading-tight truncate">{item.name}</h3>
+              <p className="text-xs text-muted-foreground truncate">{item.category || 'Sem categoria'}</p>
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 mt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                onClose();
+                onEdit(item);
+              }}
+            >
+              <Pencil className="w-3.5 h-3.5 mr-1.5" />
+              Editar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+              onClick={() => {
+                onClose();
+                onEntry(item);
+              }}
+            >
+              <ArrowDownCircle className="w-3.5 h-3.5 mr-1.5" />
+              Entrada
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-orange-700 border-orange-200 hover:bg-orange-50"
+              onClick={() => {
+                onClose();
+                onExit(item);
+              }}
+            >
+              <ArrowUpCircle className="w-3.5 h-3.5 mr-1.5" />
+              Saída
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 px-5 py-3 border-b border-border bg-muted/10">
+          <div className="text-center">
+            <p className="text-lg font-bold">{item.stockQuantity || 0}</p>
+            <p className="text-[11px] text-muted-foreground">{item.unit || 'un'} em estoque</p>
+          </div>
+          <div className="text-center border-x border-border">
+            <p className="text-sm font-bold">{`R$ ${(item.costPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</p>
+            <p className="text-[11px] text-muted-foreground">Custo</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-bold text-emerald-700">{`R$ ${(stockValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</p>
+            <p className="text-[11px] text-muted-foreground">Valor estoque</p>
+          </div>
+        </div>
+
+        <div className="flex border-b border-border">
+          <button
+            type="button"
+            onClick={() => setTab('info')}
+            className={cn(
+              'flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors',
+              tab === 'info' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground',
+            )}
+          >
+            Informações
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('stats')}
+            className={cn(
+              'flex-1 py-2.5 text-xs font-medium border-b-2 transition-colors',
+              tab === 'stats' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground',
+            )}
+          >
+            Indicadores
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {tab === 'info' ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">Dados</p>
+                <ItemInfoRow label="Nome" value={item.name} />
+                <ItemInfoRow label="SKU" value={item.sku} />
+                <ItemInfoRow label="Categoria" value={item.category} />
+                <ItemInfoRow label="Descrição" value={item.description} />
+                <ItemInfoRow label="Criado em" value={dateTimeBR(item.createdAt)} />
+                <ItemInfoRow label="Atualizado em" value={dateTimeBR(item.updatedAt)} />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border bg-muted/10 p-3">
+                <p className="text-xs text-muted-foreground mb-1">Preço de custo</p>
+                <p className="text-lg font-semibold">{`R$ ${(item.costPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-muted/10 p-3">
+                <p className="text-xs text-muted-foreground mb-1">Preço de venda</p>
+                <p className="text-lg font-semibold">{`R$ ${(item.sellPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-muted/10 p-3">
+                <p className="text-xs text-muted-foreground mb-1">Margem estimada</p>
+                <p className={cn('text-lg font-semibold', m > 0 ? 'text-emerald-700' : 'text-muted-foreground')}>
+                  {m > 0 ? `${m.toFixed(1)}%` : '—'}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border bg-muted/10 p-3">
+                <p className="text-xs text-muted-foreground mb-1">Última atualização</p>
+                <p className="text-sm font-medium inline-flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-muted-foreground" />{dateTimeBR(item.updatedAt)}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Items() {
   const [confirmModal, confirm] = useConfirm();
@@ -241,6 +415,14 @@ export default function Items() {
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStock, setFilterStock] = useState('all');
   const [sort, setSort] = useState('name_asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+  const [viewItem, setViewItem] = useState(null);
+  const [movementOpen, setMovementOpen] = useState(false);
+  const [movementType, setMovementType] = useState('in');
+  const [movementItemId, setMovementItemId] = useState('');
+  const [movementQty, setMovementQty] = useState('');
+  const [movementSaving, setMovementSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -256,11 +438,28 @@ export default function Items() {
   };
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (!viewItem) return;
+    const updated = items.find((i) => i.id === viewItem.id);
+    if (!updated) {
+      setViewItem(null);
+      return;
+    }
+    if (updated !== viewItem) setViewItem(updated);
+  }, [items, viewItem]);
+
   const openNew = () => {
     setEditing(null);
     setForm(EMPTY_FORM);
     setErrors({});
     setDialogOpen(true);
+  };
+
+  const openMovement = (type, item = null) => {
+    setMovementType(type);
+    setMovementItemId(item?.id || '');
+    setMovementQty('');
+    setMovementOpen(true);
   };
 
   const openEdit = (i) => {
@@ -338,6 +537,45 @@ export default function Items() {
     finally { setDeletingId(null); }
   };
 
+  const handleStockMovement = async (e) => {
+    e.preventDefault();
+    const qty = parseInt(movementQty, 10);
+    if (!movementItemId) {
+      toast.error('Selecione um item');
+      return;
+    }
+    if (Number.isNaN(qty) || qty <= 0) {
+      toast.error('Informe uma quantidade valida');
+      return;
+    }
+
+    const item = items.find((i) => i.id === movementItemId);
+    if (!item) {
+      toast.error('Item nao encontrado');
+      return;
+    }
+
+    const current = item.stockQuantity || 0;
+    const next = movementType === 'in' ? current + qty : current - qty;
+
+    if (movementType === 'out' && next < 0) {
+      toast.error('Saldo insuficiente para essa saida');
+      return;
+    }
+
+    setMovementSaving(true);
+    try {
+      await api.put(`/items/${item.id}`, { stockQuantity: next });
+      toast.success(movementType === 'in' ? 'Entrada registrada' : 'Saida registrada');
+      setMovementOpen(false);
+      load();
+    } catch {
+      toast.error('Nao foi possivel registrar movimentacao');
+    } finally {
+      setMovementSaving(false);
+    }
+  };
+
   const margin = (i) => {
     const c = i.costPrice || 0;
     const s = i.sellPrice || 0;
@@ -386,6 +624,10 @@ export default function Items() {
     return list;
   }, [items, search, filterCategory, filterStock, sort]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterCategory, filterStock, sort]);
+
   const categories = useMemo(() => [...new Set(items.map(i => i.category).filter(Boolean))].sort((a,b) => a.localeCompare(b,'pt-BR')), [items]);
 
   // KPI counts (always from full list)
@@ -393,8 +635,29 @@ export default function Items() {
     total:    items.length,
     zero:     items.filter(i => i.stockQuantity === 0).length,
     low:      items.filter(i => i.stockQuantity > 0 && i.stockQuantity <= 5).length,
+    stockValue: items.reduce((acc, i) => acc + ((i.stockQuantity || 0) * (i.costPrice || 0)), 0),
     cats:     categories.length,
   }), [items, categories]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const pageStart = filtered.length === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1;
+  const pageEnd = Math.min(currentPage * itemsPerPage, filtered.length);
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  }, [filtered, currentPage]);
+
+  const movementItem = useMemo(
+    () => items.find((i) => i.id === movementItemId) || null,
+    [items, movementItemId],
+  );
+  const movementQtyNum = parseInt(movementQty, 10) || 0;
+  const projectedQty = movementItem
+    ? (movementType === 'in'
+      ? (movementItem.stockQuantity || 0) + movementQtyNum
+      : (movementItem.stockQuantity || 0) - movementQtyNum)
+    : null;
+  const movementInvalid = !movementItemId || movementQtyNum <= 0 || (movementType === 'out' && projectedQty < 0);
 
   const activeFilters = [
     search        && { key:'search',   label: `"${search}"`,                    clear: () => setSearch('') },
@@ -412,12 +675,28 @@ export default function Items() {
     <div className="animate-fade-in">
       {confirmModal}
       <PageHeader title="Estoque" description={`${items.length} iten${items.length !== 1 ? 's' : ''}`}>
-        <Button onClick={openNew}><Plus className="w-4 h-4" /> Novo Item</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            className="text-orange-700 border-orange-200 hover:bg-orange-50"
+            onClick={() => openMovement('out')}
+          >
+            <ArrowUpCircle className="w-4 h-4" /> Saida
+          </Button>
+          <Button
+            variant="outline"
+            className="text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+            onClick={() => openMovement('in')}
+          >
+            <ArrowDownCircle className="w-4 h-4" /> Entrada
+          </Button>
+          <Button onClick={openNew}><Plus className="w-4 h-4" /> Novo Item</Button>
+        </div>
       </PageHeader>
 
       {/* ── KPI summary strip ── */}
       {items.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 mb-5">
           <button
             type="button"
             onClick={() => { setFilterStock('all'); setFilterCategory('all'); setSearch(''); }}
@@ -461,6 +740,13 @@ export default function Items() {
             <Tag className="w-5 h-5 text-muted-foreground flex-shrink-0" />
             <div><p className="text-lg font-bold leading-none">{kpi.cats}</p><p className="text-xs text-muted-foreground mt-0.5">Categorias</p></div>
           </button>
+          <div className="flex items-center gap-3 rounded-xl border bg-emerald-50/40 border-emerald-200 px-4 py-3 text-left">
+            <DollarSign className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-bold leading-none text-emerald-700">{fmt(kpi.stockValue)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Valor em estoque</p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -537,6 +823,7 @@ export default function Items() {
             {filtered.length === items.length
               ? `${items.length} iten${items.length !== 1 ? 's' : ''}`
               : `${filtered.length} de ${items.length} iten${items.length !== 1 ? 's' : ''}`}
+            {filtered.length > 0 ? ` • exibindo ${pageStart}–${pageEnd}` : ''}
           </span>
         </div>
         <Table>
@@ -551,7 +838,7 @@ export default function Items() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map(i => {
+            {paginatedItems.map(i => {
               const m = margin(i);
               const s = stockStatus(i.stockQuantity);
               return (
@@ -564,7 +851,13 @@ export default function Items() {
                 >
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium text-sm">{i.name}</span>
+                      <button
+                        type="button"
+                        className="font-medium text-sm text-left hover:text-primary transition-colors"
+                        onClick={() => setViewItem(i)}
+                      >
+                        {i.name}
+                      </button>
                       {i.sku && <span className="text-xs text-muted-foreground font-mono">{i.sku}</span>}
                       {i.description && <span className="text-xs text-muted-foreground truncate max-w-[220px]">{i.description}</span>}
                     </div>
@@ -591,6 +884,9 @@ export default function Items() {
                     <StockBadge qty={i.stockQuantity} unit={i.unit} />
                   </TableCell>
                   <TableCell className="text-right space-x-1">
+                    <Button variant="ghost" size="icon" onClick={() => setViewItem(i)}>
+                      <Eye className="w-4 h-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(i)}><Pencil className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="icon" disabled={deletingId === i.id} onClick={() => handleDelete(i.id, i.name)}>
                       {deletingId === i.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 text-destructive" />}
@@ -609,6 +905,32 @@ export default function Items() {
             )}
           </TableBody>
         </Table>
+
+        {filtered.length > itemsPerPage && (
+          <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-border bg-muted/10">
+            <span className="text-xs text-muted-foreground">Página {currentPage} de {totalPages}</span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Item Form Dialog ── */}
@@ -789,6 +1111,86 @@ export default function Items() {
             </div>
           </div>
 
+        </DialogContent>
+      </Dialog>
+
+      <ItemDetailDrawer
+        item={viewItem}
+        onClose={() => setViewItem(null)}
+        onEdit={openEdit}
+        onEntry={(item) => openMovement('in', item)}
+        onExit={(item) => openMovement('out', item)}
+      />
+
+      <Dialog open={movementOpen} onOpenChange={(v) => { if (!movementSaving) setMovementOpen(v); }}>
+        <DialogContent className="sm:max-w-md p-0 gap-0">
+          <div className={cn(
+            'px-6 py-4 border-b border-border flex items-center gap-3',
+            movementType === 'in' ? 'bg-emerald-50/70' : 'bg-orange-50/70',
+          )}>
+            <div className={cn(
+              'h-9 w-9 rounded-lg flex items-center justify-center',
+              movementType === 'in' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700',
+            )}>
+              {movementType === 'in' ? <ArrowDownCircle className="w-4 h-4" /> : <ArrowUpCircle className="w-4 h-4" />}
+            </div>
+            <div>
+              <DialogTitle className="text-base">{movementType === 'in' ? 'Registrar entrada' : 'Registrar saida'}</DialogTitle>
+              <DialogDescription className="text-xs">Ajuste rapido do saldo do item no estoque.</DialogDescription>
+            </div>
+          </div>
+
+          <form onSubmit={handleStockMovement} className="px-6 py-5 space-y-4">
+            <div className="space-y-1.5">
+              <Label>Item</Label>
+              <Select value={movementItemId || undefined} onValueChange={setMovementItemId}>
+                <SelectTrigger className="overflow-hidden [&>span]:block [&>span]:truncate [&>span]:whitespace-nowrap">
+                  <SelectValue placeholder="Selecione um item..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {items.map((i) => (
+                    <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {movementItem && (
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                Saldo atual: <strong className="text-foreground">{movementItem.stockQuantity || 0}</strong>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label>Quantidade</Label>
+              <Input
+                inputMode="numeric"
+                value={movementQty}
+                onChange={(e) => setMovementQty(e.target.value.replace(/\D/g, ''))}
+                placeholder="0"
+              />
+            </div>
+
+            {movementItem && movementQtyNum > 0 && (
+              <div className={cn(
+                'rounded-lg border px-3 py-2 text-xs',
+                projectedQty < 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-primary/5 border-primary/20 text-foreground',
+              )}>
+                Saldo projetado: <strong>{projectedQty}</strong>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="outline" disabled={movementSaving} onClick={() => setMovementOpen(false)}>Cancelar</Button>
+              <Button
+                type="submit"
+                disabled={movementSaving || movementInvalid}
+                className={cn(movementType === 'in' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-orange-500 hover:bg-orange-600')}
+              >
+                {movementSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : (movementType === 'in' ? 'Confirmar entrada' : 'Confirmar saida')}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
