@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useConfirm } from '@/components/ConfirmModal';
 import api from '@/api/client';
 import PageHeader from '@/components/PageHeader';
@@ -8,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import {
   Plus, Pencil, Trash2, Search, Package, X, AlertTriangle, Loader2,
   DollarSign, Tag, Layers, Hash, FileText, ShoppingCart, Boxes,
-  TrendingUp, ChevronDown, Check, ArrowUpDown, ArrowUp, ArrowDown,
+  TrendingUp, ArrowUpDown, ArrowUp, ArrowDown,
   Filter, SlidersHorizontal, CircleOff, PackageX, TriangleAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -78,68 +79,37 @@ function Section({ icon: Icon, label, children }) {
 
 // ── Category combobox ─────────────────────────────────────────────────────────
 function CategoryCombobox({ value, onChange, existingCategories }) {
-  const [open, setOpen] = useState(false);
-  const [input, setInput] = useState(value || '');
-  const ref = useRef(null);
-
-  // Sync when form resets
-  useEffect(() => { setInput(value || ''); }, [value]);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  const filtered = existingCategories.filter(c =>
-    c.toLowerCase().includes(input.toLowerCase())
-  );
-  const showCreate = input.trim() && !existingCategories.some(c => c.toLowerCase() === input.toLowerCase().trim());
-
-  const select = (cat) => { setInput(cat); onChange(cat); setOpen(false); };
+  const hasCustom = !!value && !existingCategories.includes(value);
+  const selectValue = hasCustom ? '__custom__' : (value || '__none__');
 
   return (
-    <div ref={ref} className="relative">
-      <div className="relative">
-        <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        <Input
-          value={input}
-          placeholder="Ex.: Peças, Lubrificantes, Eletrônicos..."
-          className="pl-9 pr-8"
-          onFocus={() => setOpen(true)}
-          onChange={e => { setInput(e.target.value); onChange(e.target.value); setOpen(true); }}
-        />
-        <ChevronDown
-          className={cn('absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground cursor-pointer transition-transform', open && 'rotate-180')}
-          onClick={() => setOpen(v => !v)}
-        />
-      </div>
-      {open && (filtered.length > 0 || showCreate) && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover shadow-lg overflow-hidden">
-          {filtered.map(cat => (
-            <button
-              key={cat}
-              type="button"
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-left"
-              onMouseDown={() => select(cat)}
-            >
-              <Check className={cn('w-3.5 h-3.5 flex-shrink-0', value === cat ? 'text-primary' : 'opacity-0')} />
-              {cat}
-            </button>
+    <div className="space-y-2">
+      <Select
+        value={selectValue}
+        onValueChange={(v) => {
+          if (v === '__none__') onChange('');
+          else if (v === '__custom__') onChange('');
+          else onChange(v);
+        }}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Ex.: Peças, Lubrificantes..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__none__">Sem categoria</SelectItem>
+          {existingCategories.map((cat) => (
+            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
           ))}
-          {showCreate && (
-            <button
-              type="button"
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent text-left border-t border-border text-primary"
-              onMouseDown={() => select(input.trim())}
-            >
-              <Plus className="w-3.5 h-3.5 flex-shrink-0" />
-              Criar categoria "{input.trim()}"
-            </button>
-          )}
-        </div>
+          <SelectItem value="__custom__">Outra categoria (digitar)</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {(selectValue === '__custom__' || hasCustom) && (
+        <Input
+          value={hasCustom ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Digite a categoria..."
+        />
       )}
     </div>
   );

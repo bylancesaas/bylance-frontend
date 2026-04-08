@@ -107,7 +107,7 @@ export default function AppLayout() {
             {!collapsed && (
               <button
                 onClick={() => setCollapsed(true)}
-                className="hidden lg:flex p-1.5 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/80 hover:bg-sidebar-foreground/10 transition-all flex-shrink-0"
+                className="hidden lg:flex items-center justify-center h-8 w-8 rounded-lg border border-sidebar-foreground/20 bg-sidebar-foreground/10 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-foreground/20 transition-all flex-shrink-0 shadow-sm"
                 title="Recolher menu"
               >
                 <PanelLeftClose className="w-[15px] h-[15px]" />
@@ -117,7 +117,7 @@ export default function AppLayout() {
             {collapsed && (
               <button
                 onClick={() => setCollapsed(false)}
-                className="hidden lg:flex p-1.5 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/80 hover:bg-sidebar-foreground/10 transition-all flex-shrink-0"
+                className="hidden lg:flex items-center justify-center h-8 w-8 rounded-lg border border-sidebar-foreground/20 bg-sidebar-foreground/10 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-foreground/20 transition-all flex-shrink-0 shadow-sm"
                 title="Expandir menu"
               >
                 <PanelLeftOpen className="w-[15px] h-[15px]" />

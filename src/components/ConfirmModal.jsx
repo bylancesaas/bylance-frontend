@@ -67,9 +67,9 @@ export function ConfirmModal({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
-        className="fixed left-1/2 top-1/2 z-[71] -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-md animate-scale-in"
+        className="fixed inset-0 z-[71] flex items-center justify-center p-4"
       >
-        <div className="bg-card rounded-2xl border border-border shadow-overlay p-6 flex flex-col gap-5">
+        <div className="w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto bg-card rounded-2xl border border-border shadow-overlay p-6 flex flex-col gap-5 animate-scale-in">
           {/* Icon + close */}
           <div className="flex items-start justify-between gap-4">
             <div className={`h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.wrapper}`}>

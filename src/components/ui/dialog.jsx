@@ -12,17 +12,66 @@ const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay ref={ref} className={cn('fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0', className)} {...props} />
 ));
 
-const DialogContent = React.forwardRef(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content ref={ref} className={cn('fixed left-[50%] top-[50%] z-50 grid w-[calc(100vw-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-card p-6 shadow-overlay duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-xl', className)} {...props}>
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md p-1 opacity-50 hover:opacity-100 hover:bg-muted transition-all">
-        <X className="h-4 w-4" />
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-));
+const DialogContent = React.forwardRef(({
+  className,
+  children,
+  onPointerDownOutside,
+  onInteractOutside,
+  ...props
+}, ref) => {
+  const resolveEventTarget = (event) => {
+    const target = event?.detail?.originalEvent?.target || event?.target;
+    if (target?.nodeType === 3) return target.parentElement;
+    return target;
+  };
+
+  const eventPathHasComboboxPortal = (event) => {
+    const originalEvent = event?.detail?.originalEvent || event;
+    const path = originalEvent?.composedPath?.() || [];
+    return path.some((node) => {
+      if (!node) return false;
+      if (node?.dataset?.comboboxPortal === 'true') return true;
+      if (node?.getAttribute?.('data-combobox-portal') === 'true') return true;
+      return false;
+    });
+  };
+
+  const isComboboxPortalTarget = (event) => {
+    const target = resolveEventTarget(event);
+    if (eventPathHasComboboxPortal(event)) return true;
+    return !!target?.closest?.('[data-combobox-portal="true"]');
+  };
+
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn('fixed left-[50%] top-[50%] z-50 grid w-[calc(100vw-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-card p-6 shadow-overlay duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-xl', className)}
+        onPointerDownOutside={(event) => {
+          if (isComboboxPortalTarget(event)) {
+            event.preventDefault();
+            return;
+          }
+          onPointerDownOutside?.(event);
+        }}
+        onInteractOutside={(event) => {
+          if (isComboboxPortalTarget(event)) {
+            event.preventDefault();
+            return;
+          }
+          onInteractOutside?.(event);
+        }}
+        {...props}
+      >
+        {children}
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md p-1 opacity-50 hover:opacity-100 hover:bg-muted transition-all">
+          <X className="h-4 w-4" />
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  );
+});
 
 const DialogHeader = ({ className, ...props }) => (
   <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />

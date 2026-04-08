@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useConfirm } from '@/components/ConfirmModal';
 import api from '@/api/client';
 import PageHeader from '@/components/PageHeader';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -40,93 +42,32 @@ const fmt = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigit
 // â”€â”€ SearchSelect â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Combobox with live search — replaces native <select> for large lists
 function SearchSelect({ value, onChange, options, placeholder = 'Selecione...', disabled = false, className }) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState('');
-  const ref = useRef(null);
-  const inputRef = useRef(null);
-
-  const selected = options.find(o => o.value === value);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  useEffect(() => {
-    if (open) { setQ(''); setTimeout(() => inputRef.current?.focus(), 50); }
-  }, [open]);
-
-  const filtered = useMemo(() =>
-    q.trim()
-      ? options.filter(o => o.label.toLowerCase().includes(q.toLowerCase()))
-      : options,
-    [q, options]
-  );
-
-  const select = (val) => { onChange(val); setOpen(false); };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Escape') setOpen(false);
-    if (e.key === 'Enter' && filtered.length > 0) { e.preventDefault(); select(filtered[0].value); }
-  };
+  const normalizedValue = value === '' ? '__empty__' : value;
 
   return (
-    <div ref={ref} className={cn('relative', className)}>
-      <button
-        type="button"
+    <div className={className}>
+      <Select
+        value={normalizedValue || undefined}
+        onValueChange={(v) => onChange(v === '__empty__' ? '' : v)}
         disabled={disabled}
-        onClick={() => setOpen(v => !v)}
-        className={cn(
-          'flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3 py-2 text-sm',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-          'disabled:opacity-50 disabled:pointer-events-none',
-          !selected && 'text-muted-foreground',
-        )}
       >
-        <span className="truncate">{selected ? selected.label : placeholder}</span>
-        <ChevronDown className={cn('w-4 h-4 flex-shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} />
-      </button>
-
-      {open && (
-        <div className="absolute z-[60] mt-1 w-full rounded-md border border-border bg-popover shadow-xl overflow-hidden">
-          <div className="p-2 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <input
-                ref={inputRef}
-                value={q}
-                onChange={e => setQ(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Digitar para filtrar..."
-                className="w-full pl-8 pr-2 py-1.5 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-          </div>
-          <div className="max-h-52 overflow-y-auto">
-            {filtered.length === 0
-              ? <p className="py-3 text-center text-xs text-muted-foreground">Nenhum resultado</p>
-              : filtered.map(o => (
-                  <button
-                    key={o.value}
-                    type="button"
-                    className={cn(
-                      'w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left hover:bg-accent transition-colors',
-                      value === o.value && 'bg-primary/5 text-primary font-medium',
-                    )}
-                    onMouseDown={() => select(o.value)}
-                  >
-                    {o.sub
-                      ? <div><div className="leading-tight">{o.label}</div><div className="text-xs text-muted-foreground">{o.sub}</div></div>
-                      : o.label
-                    }
-                  </button>
-                ))
-            }
-          </div>
-        </div>
-      )}
+        <SelectTrigger>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((o) => {
+            const optionValue = o.value === '' ? '__empty__' : o.value;
+            return (
+              <SelectItem key={optionValue} value={optionValue}>
+                <div className="flex flex-col">
+                  <span>{o.label}</span>
+                  {o.sub ? <span className="text-xs text-muted-foreground">{o.sub}</span> : null}
+                </div>
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -169,13 +110,52 @@ function InlineStatusMenu({ orderId, current, onChanged }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const ref = useRef(null);
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+  const [menuStyle, setMenuStyle] = useState(null);
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const handler = (e) => {
+      const path = e.composedPath?.() || [];
+      if (ref.current && path.includes(ref.current)) return;
+      if (menuRef.current && path.includes(menuRef.current)) return;
+      setOpen(false);
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
   }, [open]);
+
+  const updateMenuPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const spaceAbove = rect.top - 8;
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const placeAbove = spaceBelow < 180 && spaceAbove > spaceBelow;
+    const top = placeAbove ? Math.max(8, rect.top - 170 - 4) : rect.bottom + 6;
+
+    setMenuStyle({
+      position: 'fixed',
+      left: rect.left,
+      top,
+      width: 160,
+      zIndex: 90,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    updateMenuPosition();
+    const handler = () => updateMenuPosition();
+    window.addEventListener('resize', handler);
+    window.addEventListener('scroll', handler, true);
+    return () => {
+      window.removeEventListener('resize', handler);
+      window.removeEventListener('scroll', handler, true);
+    };
+  }, [open, updateMenuPosition]);
 
   const change = async (status) => {
     setLoading(true);
@@ -192,6 +172,7 @@ function InlineStatusMenu({ orderId, current, onChanged }) {
   return (
     <div ref={ref} className="relative inline-flex">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(v => !v)}
         className="inline-flex items-center gap-1 focus:outline-none"
@@ -203,22 +184,27 @@ function InlineStatusMenu({ orderId, current, onChanged }) {
           <ChevronDown className="w-3 h-3 opacity-60" />
         </Badge>
       </button>
-      {open && (
-        <div className="absolute left-0 top-full z-50 mt-1.5 w-40 rounded-md border border-border bg-popover shadow-lg overflow-hidden">
+      {open && menuStyle && createPortal(
+        <div ref={menuRef} style={menuStyle} className="rounded-md border border-border bg-white text-foreground shadow-lg overflow-hidden">
           {STATUS_ORDER.map(s => (
             <button
               key={s}
               type="button"
               className={cn(
-                'w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors text-left',
+                'w-full flex items-center gap-2 px-3 py-2 text-sm bg-white hover:bg-accent transition-colors text-left',
                 s === current && 'bg-primary/5 font-medium',
               )}
-              onMouseDown={() => change(s)}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                change(s);
+              }}
             >
               <Badge variant={STATUS_MAP[s].variant} className="text-[10px] py-0">{STATUS_MAP[s].label}</Badge>
             </button>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
@@ -287,68 +273,37 @@ const SERVICE_STATUS = {
 
 // ── ServiceCategoryCombobox ───────────────────────────────────────────────────────────────
 function ServiceCategoryCombobox({ value, onChange, existingCategories }) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState('');
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  const filtered = q.trim()
-    ? existingCategories.filter(cat => cat.toLowerCase().includes(q.toLowerCase()))
-    : existingCategories;
-  const showCreate = q.trim() && !existingCategories.some(cat => cat.toLowerCase() === q.toLowerCase());
+  const hasCustom = !!value && !existingCategories.includes(value);
+  const selectValue = hasCustom ? '__custom__' : (value || '__none__');
 
   return (
-    <div ref={ref} className="relative">
-      <div className="relative">
-        <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+    <div className="space-y-2">
+      <Select
+        value={selectValue}
+        onValueChange={(v) => {
+          if (v === '__none__') onChange('');
+          else if (v === '__custom__') onChange('');
+          else onChange(v);
+        }}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Categoria do serviço..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__none__">Sem categoria</SelectItem>
+          {existingCategories.map((cat) => (
+            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+          ))}
+          <SelectItem value="__custom__">Outra categoria (digitar)</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {(selectValue === '__custom__' || hasCustom) && (
         <Input
-          value={open ? q : (value || '')}
-          onFocus={() => { setOpen(true); setQ(value || ''); }}
-          onChange={e => { setQ(e.target.value); onChange(e.target.value); }}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              if (filtered.length > 0) { onChange(filtered[0]); setQ(''); setOpen(false); }
-              else if (showCreate) { onChange(q.trim()); setQ(''); setOpen(false); }
-            }
-            if (e.key === 'Escape') setOpen(false);
-          }}
-          placeholder="Categoria do serviço..."
-          className="pl-9"
+          value={hasCustom ? value : ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Digite a categoria..."
         />
-        {value && (
-          <button type="button"
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            onClick={() => { onChange(''); setQ(''); setOpen(false); }}>
-            <X className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-      {open && (filtered.length > 0 || showCreate) && (
-        <div className="absolute z-[60] mt-1 w-full rounded-md border border-border bg-popover shadow-xl overflow-hidden">
-          <div className="max-h-44 overflow-y-auto">
-            {filtered.map(cat => (
-              <button key={cat} type="button"
-                className={cn('w-full px-3 py-2.5 text-sm text-left hover:bg-accent transition-colors', value === cat && 'bg-primary/5 text-primary font-medium')}
-                onMouseDown={() => { onChange(cat); setQ(''); setOpen(false); }}>
-                {cat}
-              </button>
-            ))}
-            {showCreate && (
-              <button type="button"
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left text-primary hover:bg-accent transition-colors border-t border-border"
-                onMouseDown={() => { onChange(q.trim()); setQ(''); setOpen(false); }}>
-                <Plus className="w-3.5 h-3.5" /> Criar "{q.trim()}"
-              </button>
-            )}
-          </div>
-        </div>
       )}
     </div>
   );
@@ -519,7 +474,7 @@ export default function ServiceOrders() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     if (!form.clientId) { toast.error('Selecione um cliente'); return; }
     const payload = {
       ...form,

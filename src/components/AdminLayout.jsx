@@ -52,7 +52,7 @@ export default function AdminLayout() {
           )}
           <button
             onClick={() => setCollapsed(v => !v)}
-            className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/10 transition-all shrink-0"
+            className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg border border-sidebar-foreground/20 bg-sidebar-foreground/10 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-foreground/20 transition-all shrink-0 shadow-sm"
             aria-label={collapsed ? 'Expandir sidebar' : 'Retrair sidebar'}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}

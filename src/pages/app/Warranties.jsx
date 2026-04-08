@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useConfirm } from '@/components/ConfirmModal';
 import api from '@/api/client';
 import PageHeader from '@/components/PageHeader';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -58,88 +59,30 @@ function daysUntil(endDate) {
 
 // ── SearchSelect ──────────────────────────────────────────────────────────────────────────
 function SearchSelect({ value, onChange, options, placeholder = 'Selecione...', disabled = false, className }) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState('');
-  const ref = useRef(null);
-  const inputRef = useRef(null);
-  const selected = options.find(o => o.value === value);
-
-  useEffect(() => {
-    if (!open) return;
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [open]);
-
-  useEffect(() => {
-    if (open) { setQ(''); setTimeout(() => inputRef.current?.focus(), 50); }
-  }, [open]);
-
-  const filtered = useMemo(() => {
-    if (!q.trim()) return options;
-    const lq = q.toLowerCase();
-    return options.filter(o =>
-      o.label.toLowerCase().includes(lq) ||
-      (o.sub || '').toLowerCase().includes(lq)
-    );
-  }, [q, options]);
-
-  const select = (val) => { onChange(val); setOpen(false); };
+  const normalizedValue = value === '' ? '__empty__' : value;
 
   return (
-    <div ref={ref} className={cn('relative', className)}>
-      <button
-        type="button" disabled={disabled}
-        onClick={() => setOpen(v => !v)}
-        className={cn(
-          'flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-card px-3 py-2 text-sm',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none',
-          !selected && 'text-muted-foreground',
-        )}
+    <div className={className}>
+      <Select
+        value={normalizedValue || undefined}
+        onValueChange={(v) => onChange(v === '__empty__' ? '' : v)}
+        disabled={disabled}
       >
-        <span className="truncate">{selected ? selected.label : placeholder}</span>
-        <ChevronDown className={cn('w-4 h-4 flex-shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} />
-      </button>
-      {open && (
-        <div className="absolute z-[60] mt-1 w-full rounded-md border border-border bg-popover shadow-xl overflow-hidden">
-          <div className="p-2 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Escape') setOpen(false);
-                  if (e.key === 'Enter' && filtered.length > 0) { e.preventDefault(); select(filtered[0].value); }
-                }}
-                placeholder="Filtrar..." className="w-full pl-8 pr-2 py-1.5 text-sm bg-transparent outline-none placeholder:text-muted-foreground" />
-            </div>
-          </div>
-          <div className="max-h-60 overflow-y-auto">
-            {filtered.length === 0
-              ? <p className="py-3 text-center text-xs text-muted-foreground">Nenhum resultado</p>
-              : filtered.map(o => (
-                <button key={o.value} type="button"
-                  className={cn(
-                    'w-full flex items-start gap-2.5 px-3 py-2.5 text-sm text-left hover:bg-accent transition-colors',
-                    value === o.value && 'bg-primary/5 text-primary font-medium',
-                  )}
-                  onMouseDown={() => select(o.value)}
-                >
-                  {o.Icon && <o.Icon className={cn('w-3.5 h-3.5 flex-shrink-0 mt-0.5', o.iconCls || 'text-muted-foreground')} />}
-                  <div className="flex-1 min-w-0">
-                    <div className="leading-tight truncate">{o.label}</div>
-                    {o.sub && <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{o.sub}</div>}
-                    {o.warn && (
-                      <div className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3 flex-shrink-0" />{o.warn}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))
-            }
-          </div>
-        </div>
-      )}
+        <SelectTrigger className="overflow-hidden [&>span]:block [&>span]:truncate [&>span]:whitespace-nowrap">
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((o) => {
+            const optionValue = o.value === '' ? '__empty__' : o.value;
+            const optionText = o.warn
+              ? `${o.label} - ${o.warn}`
+              : (o.sub ? `${o.label} - ${o.sub}` : o.label);
+            return (
+              <SelectItem key={optionValue} value={optionValue}>{optionText}</SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -286,14 +229,6 @@ export default function Warranties() {
 
     return opts;
   }, [clientOrders, warranties, form.clientId, editing]);
-
-  const clientOptions = useMemo(() =>
-    clients.map(c => ({
-      value: c.id, label: c.name,
-      sub: c.document || c.phone || undefined,
-    })),
-    [clients]
-  );
 
   // ── Auto-fill on source select ──
   const handleSourceSelect = useCallback((sourceId) => {
@@ -608,13 +543,13 @@ export default function Warranties() {
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={v => { if (!saving) setDialogOpen(v); }}>
-        <DialogContent className="max-w-lg max-h-[95vh] flex flex-col p-0 gap-0">
+        <DialogContent className="max-w-2xl max-h-[95vh] flex flex-col p-0 gap-0">
 
           <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
             <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Shield className="w-5 h-5 text-primary" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h2 className="text-base font-semibold leading-tight">
                 {editing ? 'Editar Garantia' : 'Emitir Garantia'}
               </h2>
@@ -631,15 +566,23 @@ export default function Warranties() {
 
               {/* 1 — Cliente */}
               <Section icon={User} label="1. Cliente">
-                <SearchSelect
-                  value={form.clientId}
-                  onChange={v => {
+                <Select
+                  value={form.clientId || undefined}
+                  onValueChange={(v) => {
                     setForm({ ...emptyForm, status: 'active', clientId: v });
-                    setSelectedSourceId(''); setManualMode(false);
+                    setSelectedSourceId('');
+                    setManualMode(false);
                   }}
-                  options={clientOptions}
-                  placeholder="Selecionar cliente..."
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar cliente..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Section>
 
               {/* 2 — Origem */}
