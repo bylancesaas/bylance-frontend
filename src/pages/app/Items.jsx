@@ -182,6 +182,12 @@ const STOCK_STATUS_OPTIONS = [
   { value: 'nocat',  label: 'Sem categoria' },
 ];
 
+const ENTRY_TYPE_OPTIONS = [
+  { value: 'purchase', label: 'Compra' },
+  { value: 'adjustment', label: 'Ajuste' },
+  { value: 'return', label: 'Devolução' },
+];
+
 function stockStatus(qty) {
   if (qty === 0) return 'zero';
   if (qty <= 5)  return 'low';
@@ -237,6 +243,18 @@ function dateTimeBR(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return '—';
   return d.toLocaleString('pt-BR');
+}
+
+function nowDateTimeLocal() {
+  const d = new Date();
+  d.setSeconds(0, 0);
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function movementItemLabel(item) {
+  if (!item) return '';
+  return item.sku ? `${item.name} (${item.sku})` : item.name;
 }
 
 function ItemInfoRow({ label, value }) {
@@ -421,7 +439,14 @@ export default function Items() {
   const [movementOpen, setMovementOpen] = useState(false);
   const [movementType, setMovementType] = useState('in');
   const [movementItemId, setMovementItemId] = useState('');
+  const [movementItemQuery, setMovementItemQuery] = useState('');
   const [movementQty, setMovementQty] = useState('');
+  const [movementEntryType, setMovementEntryType] = useState('purchase');
+  const [movementDate, setMovementDate] = useState(nowDateTimeLocal);
+  const [movementUnitCost, setMovementUnitCost] = useState('');
+  const [movementSupplier, setMovementSupplier] = useState('');
+  const [movementDoc, setMovementDoc] = useState('');
+  const [movementNotes, setMovementNotes] = useState('');
   const [movementSaving, setMovementSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -458,7 +483,14 @@ export default function Items() {
   const openMovement = (type, item = null) => {
     setMovementType(type);
     setMovementItemId(item?.id || '');
+    setMovementItemQuery(movementItemLabel(item));
     setMovementQty('');
+    setMovementEntryType('purchase');
+    setMovementDate(nowDateTimeLocal());
+    setMovementUnitCost('');
+    setMovementSupplier('');
+    setMovementDoc('');
+    setMovementNotes('');
     setMovementOpen(true);
   };
 
@@ -555,22 +587,38 @@ export default function Items() {
       return;
     }
 
-    const current = item.stockQuantity || 0;
-    const next = movementType === 'in' ? current + qty : current - qty;
-
-    if (movementType === 'out' && next < 0) {
+    if (movementType === 'out' && projectedQty < 0) {
       toast.error('Saldo insuficiente para essa saida');
       return;
     }
 
+    if (movementType === 'in' && movementDate && Number.isNaN(new Date(movementDate).getTime())) {
+      toast.error('Data invalida');
+      return;
+    }
+
+    const payload = {
+      type: movementType,
+      quantity: qty,
+      notes: movementNotes.trim() || undefined,
+    };
+
+    if (movementType === 'in') {
+      payload.entryType = movementEntryType;
+      payload.movementDate = movementDate ? new Date(movementDate).toISOString() : undefined;
+      payload.unitCost = movementUnitCost ? parseMoney(movementUnitCost) : undefined;
+      payload.supplier = movementSupplier.trim() || undefined;
+      payload.document = movementDoc.trim() || undefined;
+    }
+
     setMovementSaving(true);
     try {
-      await api.put(`/items/${item.id}`, { stockQuantity: next });
+      await api.post(`/items/${item.id}/movements`, payload);
       toast.success(movementType === 'in' ? 'Entrada registrada' : 'Saida registrada');
       setMovementOpen(false);
       load();
-    } catch {
-      toast.error('Nao foi possivel registrar movimentacao');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Nao foi possivel registrar movimentacao');
     } finally {
       setMovementSaving(false);
     }
@@ -651,13 +699,28 @@ export default function Items() {
     () => items.find((i) => i.id === movementItemId) || null,
     [items, movementItemId],
   );
+  const movementItemOptions = useMemo(
+    () => items.map((i) => ({ id: i.id, label: movementItemLabel(i) })),
+    [items],
+  );
+
+  useEffect(() => {
+    if (!movementOpen || !movementItemId) return;
+    const selected = movementItemOptions.find((o) => o.id === movementItemId);
+    if (selected) setMovementItemQuery(selected.label);
+  }, [movementOpen, movementItemId, movementItemOptions]);
+
   const movementQtyNum = parseInt(movementQty, 10) || 0;
   const projectedQty = movementItem
     ? (movementType === 'in'
       ? (movementItem.stockQuantity || 0) + movementQtyNum
       : (movementItem.stockQuantity || 0) - movementQtyNum)
     : null;
-  const movementInvalid = !movementItemId || movementQtyNum <= 0 || (movementType === 'out' && projectedQty < 0);
+  const movementInvalid =
+    !movementItemId
+    || movementQtyNum <= 0
+    || (movementType === 'out' && projectedQty < 0)
+    || (movementType === 'in' && !movementDate);
 
   const activeFilters = [
     search        && { key:'search',   label: `"${search}"`,                    clear: () => setSearch('') },
@@ -1123,74 +1186,215 @@ export default function Items() {
       />
 
       <Dialog open={movementOpen} onOpenChange={(v) => { if (!movementSaving) setMovementOpen(v); }}>
-        <DialogContent className="sm:max-w-md p-0 gap-0">
-          <div className={cn(
-            'px-6 py-4 border-b border-border flex items-center gap-3',
-            movementType === 'in' ? 'bg-emerald-50/70' : 'bg-orange-50/70',
-          )}>
+        <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden">
+          <div className="px-6 py-4 border-b border-border flex items-center gap-3">
             <div className={cn(
-              'h-9 w-9 rounded-lg flex items-center justify-center',
+              'h-8 w-8 rounded-full flex items-center justify-center',
               movementType === 'in' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700',
             )}>
               {movementType === 'in' ? <ArrowDownCircle className="w-4 h-4" /> : <ArrowUpCircle className="w-4 h-4" />}
             </div>
             <div>
-              <DialogTitle className="text-base">{movementType === 'in' ? 'Registrar entrada' : 'Registrar saida'}</DialogTitle>
-              <DialogDescription className="text-xs">Ajuste rapido do saldo do item no estoque.</DialogDescription>
+              <DialogTitle className="text-[22px] leading-tight">
+                {movementType === 'in' ? 'Registrar Entrada' : 'Registrar Saída'}
+              </DialogTitle>
+              <DialogDescription className="text-sm">
+                {movementType === 'in' ? 'Adicionar itens ao estoque' : 'Remover itens do estoque'}
+              </DialogDescription>
             </div>
           </div>
 
-          <form onSubmit={handleStockMovement} className="px-6 py-5 space-y-4">
-            <div className="space-y-1.5">
-              <Label>Item</Label>
-              <Select value={movementItemId || undefined} onValueChange={setMovementItemId}>
-                <SelectTrigger className="overflow-hidden [&>span]:block [&>span]:truncate [&>span]:whitespace-nowrap">
-                  <SelectValue placeholder="Selecione um item..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {items.map((i) => (
-                    <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+          {movementType === 'in' ? (
+            <form onSubmit={handleStockMovement} className="px-6 py-5 space-y-4">
+              <div className="space-y-1.5">
+                <Label>
+                  Item <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    list="movement-item-options"
+                    value={movementItemQuery}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setMovementItemQuery(next);
+                      const found = movementItemOptions.find((o) => o.label.toLowerCase() === next.trim().toLowerCase());
+                      setMovementItemId(found?.id || '');
+                    }}
+                    placeholder="Buscar item por nome ou código..."
+                    className="pl-9"
+                  />
+                </div>
+                <datalist id="movement-item-options">
+                  {movementItemOptions.map((o) => (
+                    <option key={o.id} value={o.label} />
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {movementItem && (
-              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-                Saldo atual: <strong className="text-foreground">{movementItem.stockQuantity || 0}</strong>
+                </datalist>
+                {movementItemQuery && !movementItemId && (
+                  <p className="text-xs text-amber-600">Selecione um item válido da lista para continuar.</p>
+                )}
               </div>
-            )}
 
-            <div className="space-y-1.5">
-              <Label>Quantidade</Label>
-              <Input
-                inputMode="numeric"
-                value={movementQty}
-                onChange={(e) => setMovementQty(e.target.value.replace(/\D/g, ''))}
-                placeholder="0"
-              />
-            </div>
-
-            {movementItem && movementQtyNum > 0 && (
-              <div className={cn(
-                'rounded-lg border px-3 py-2 text-xs',
-                projectedQty < 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-primary/5 border-primary/20 text-foreground',
-              )}>
-                Saldo projetado: <strong>{projectedQty}</strong>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>
+                    Tipo <span className="text-destructive">*</span>
+                  </Label>
+                  <select
+                    value={movementEntryType}
+                    onChange={(e) => setMovementEntryType(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {ENTRY_TYPE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>
+                    Data <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    type="datetime-local"
+                    value={movementDate}
+                    onChange={(e) => setMovementDate(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
-            )}
 
-            <div className="flex justify-end gap-2 pt-1">
-              <Button type="button" variant="outline" disabled={movementSaving} onClick={() => setMovementOpen(false)}>Cancelar</Button>
-              <Button
-                type="submit"
-                disabled={movementSaving || movementInvalid}
-                className={cn(movementType === 'in' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-orange-500 hover:bg-orange-600')}
-              >
-                {movementSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : (movementType === 'in' ? 'Confirmar entrada' : 'Confirmar saida')}
-              </Button>
-            </div>
-          </form>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>
+                    Quantidade <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    inputMode="numeric"
+                    value={movementQty}
+                    onChange={(e) => setMovementQty(e.target.value.replace(/\D/g, ''))}
+                    placeholder="0"
+                    required
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Custo Unitário</Label>
+                  <MoneyInput
+                    value={movementUnitCost}
+                    onChange={setMovementUnitCost}
+                    icon={DollarSign}
+                    placeholder="0,00"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Fornecedor</Label>
+                  <Input
+                    value={movementSupplier}
+                    onChange={(e) => setMovementSupplier(e.target.value)}
+                    placeholder="Nome do fornecedor"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Nº Nota / Doc.</Label>
+                  <Input
+                    value={movementDoc}
+                    onChange={(e) => setMovementDoc(e.target.value)}
+                    placeholder="NF-001234"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Observações</Label>
+                <textarea
+                  rows={3}
+                  value={movementNotes}
+                  onChange={(e) => setMovementNotes(e.target.value)}
+                  placeholder="Informações adicionais..."
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                />
+              </div>
+
+              {movementItem && (
+                <div className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                  Saldo atual: <strong className="text-foreground">{movementItem.stockQuantity || 0}</strong>
+                </div>
+              )}
+
+              {movementItem && movementQtyNum > 0 && (
+                <div className="rounded-lg border px-3 py-2 text-xs bg-primary/5 border-primary/20 text-foreground">
+                  Saldo projetado: <strong>{projectedQty}</strong>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
+                <Button type="button" variant="outline" disabled={movementSaving} onClick={() => setMovementOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={movementSaving || movementInvalid}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {movementSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirmar Entrada'}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleStockMovement} className="px-6 py-5 space-y-4">
+              <div className="space-y-1.5">
+                <Label>Item</Label>
+                <Select value={movementItemId || undefined} onValueChange={setMovementItemId}>
+                  <SelectTrigger className="overflow-hidden [&>span]:block [&>span]:truncate [&>span]:whitespace-nowrap">
+                    <SelectValue placeholder="Selecione um item..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {items.map((i) => (
+                      <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {movementItem && (
+                <div className="rounded-lg border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                  Saldo atual: <strong className="text-foreground">{movementItem.stockQuantity || 0}</strong>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label>Quantidade</Label>
+                <Input
+                  inputMode="numeric"
+                  value={movementQty}
+                  onChange={(e) => setMovementQty(e.target.value.replace(/\D/g, ''))}
+                  placeholder="0"
+                />
+              </div>
+
+              {movementItem && movementQtyNum > 0 && (
+                <div className={cn(
+                  'rounded-lg border px-3 py-2 text-xs',
+                  projectedQty < 0 ? 'bg-red-50 border-red-200 text-red-700' : 'bg-primary/5 border-primary/20 text-foreground',
+                )}>
+                  Saldo projetado: <strong>{projectedQty}</strong>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-1">
+                <Button type="button" variant="outline" disabled={movementSaving} onClick={() => setMovementOpen(false)}>Cancelar</Button>
+                <Button
+                  type="submit"
+                  disabled={movementSaving || movementInvalid}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  {movementSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirmar Saída'}
+                </Button>
+              </div>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>
